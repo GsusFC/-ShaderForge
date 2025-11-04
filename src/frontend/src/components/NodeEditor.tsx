@@ -284,24 +284,36 @@ export default function NodeEditor() {
           )}
         </div>
 
-        {/* Compiled Code Panel */}
-        {compiledCode && !showPreview && (
-          <div className="code-panel">
+        {/* Compiled Code Panel - Always show when available */}
+        {compiledCode && (
+          <div className="code-panel" style={{ display: showPreview ? 'none' : 'block' }}>
             <div className="code-panel-header">
-              <h3>Código GLSL Generado</h3>
+              <h3>Código GLSL Compilado</h3>
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(compiledCode)
-                  alert('Código copiado al portapapeles')
+                  alert('✓ Código copiado')
                 }}
                 className="btn btn-primary"
-                style={{ padding: '4px 8px', fontSize: '11px' }}
+                style={{ padding: '6px 12px', fontSize: '12px' }}
               >
-                Copiar
+                📋 Copiar
               </button>
             </div>
             <div className="code-block">
-              {compiledCode}
+              <pre>{compiledCode}</pre>
+            </div>
+          </div>
+        )}
+        
+        {/* Show code panel hint */}
+        {!compiledCode && !showPreview && (
+          <div className="code-panel">
+            <div className="code-panel-header">
+              <h3>Código GLSL Compilado</h3>
+            </div>
+            <div className="code-block" style={{ color: '#666' }}>
+              Compila un shader para ver el código GLSL generado aquí
             </div>
           </div>
         )}
