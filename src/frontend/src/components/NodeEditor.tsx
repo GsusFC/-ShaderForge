@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from 'react'
+import { useCallback, useState, useEffect, useRef } from 'react'
 import ReactFlow, {
   Node,
   Edge,
@@ -32,6 +32,7 @@ export default function NodeEditor() {
   const [showPreview, setShowPreview] = useState(true)
   const [isCompiling, setIsCompiling] = useState(false)
   const [autoCompile, setAutoCompile] = useState(true)
+  const isCompilingRef = useRef(false)
 
   const { currentShaderCode, currentShaderName, isFromSearch, clearShader } = useShaderStore()
 
@@ -48,11 +49,13 @@ export default function NodeEditor() {
     if (!autoCompile || nodes.length === 0) return
 
     const timeoutId = setTimeout(async () => {
-      if (isCompiling) return
+      // Use ref to prevent concurrent compilations
+      if (isCompilingRef.current) return
+
+      isCompilingRef.current = true
+      setIsCompiling(true)
 
       try {
-        setIsCompiling(true)
-
         const nodesWithParams = nodes.map((node: any) => ({
           ...node,
           parameters: node.data?.parameters || {},
@@ -75,12 +78,13 @@ export default function NodeEditor() {
       } catch (error) {
         console.error('Auto-compile error:', error)
       } finally {
+        isCompilingRef.current = false
         setIsCompiling(false)
       }
     }, 500) // 500ms debounce
 
     return () => clearTimeout(timeoutId)
-  }, [nodes, edges, autoCompile, isCompiling])
+  }, [nodes, edges, autoCompile])
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -131,11 +135,12 @@ export default function NodeEditor() {
   }, [setNodes, setEdges])
 
   const handleCompile = useCallback(async () => {
-    if (isCompiling || nodes.length === 0) return
+    if (isCompilingRef.current || nodes.length === 0) return
+
+    isCompilingRef.current = true
+    setIsCompiling(true)
 
     try {
-      setIsCompiling(true)
-
       // Prepare nodes with their parameters for compilation
       const nodesWithParams = nodes.map((node: any) => ({
         ...node,
@@ -161,9 +166,10 @@ export default function NodeEditor() {
     } catch (error) {
       console.error('Compile error:', error)
     } finally {
+      isCompilingRef.current = false
       setIsCompiling(false)
     }
-  }, [nodes, edges, isCompiling])
+  }, [nodes, edges])
 
   return (
     <div className="w-full h-screen flex" style={{ backgroundColor: '#0a0a0a' }}>
