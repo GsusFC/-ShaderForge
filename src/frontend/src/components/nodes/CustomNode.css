@@ -1,0 +1,237 @@
+/* Custom Node Styling */
+.custom-node {
+  background-color: #1a1a1a;
+  border: 2px solid #3a3a3a;
+  border-radius: 6px;
+  padding: 0;
+  min-width: 160px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  transition: all 200ms ease;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.custom-node:hover {
+  border-color: #5a5a5a;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+}
+
+.custom-node.selected {
+  border-color: #00ff88;
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.3), 0 4px 24px rgba(0, 0, 0, 0.5);
+}
+
+.custom-node.input {
+  border-left: 3px solid #3b82f6;
+}
+
+.custom-node.input.selected {
+  border-left-color: #00ff88;
+}
+
+.custom-node.operation {
+  border-left: 3px solid #8b5cf6;
+}
+
+.custom-node.operation.selected {
+  border-left-color: #00ff88;
+}
+
+.custom-node.output {
+  border-left: 3px solid #10b981;
+}
+
+.custom-node.output.selected {
+  border-left-color: #00ff88;
+}
+
+/* Node Content */
+.node-content {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  gap: 8px;
+}
+
+/* Node Header */
+.node-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #2a2a2a;
+  margin-bottom: 4px;
+}
+
+.node-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e5e5e5;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  flex: 1;
+}
+
+/* Node Description */
+.node-description {
+  font-size: 11px;
+  color: #a0a0a0;
+  line-height: 1.3;
+  margin-top: 4px;
+}
+
+/* Node Parameters */
+.node-params {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.param-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+}
+
+.param-label {
+  font-size: 11px;
+  color: #6a6a6a;
+  font-weight: 600;
+  width: 20px;
+  text-align: center;
+}
+
+.param-value {
+  flex: 1;
+  background-color: #0f0f0f;
+  border: 1px solid #2a2a2a;
+  border-radius: 3px;
+  color: #e5e5e5;
+  padding: 4px 6px;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  transition: all 100ms ease;
+}
+
+.param-value:focus {
+  outline: none;
+  border-color: #00ff88;
+  box-shadow: 0 0 8px rgba(0, 255, 136, 0.2);
+}
+
+.param-value::placeholder {
+  color: #4a4a4a;
+}
+
+/* Node Actions */
+.node-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #2a2a2a;
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.custom-node:hover .node-actions {
+  opacity: 1;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 4px 6px;
+  background-color: #0f0f0f;
+  border: 1px solid #2a2a2a;
+  border-radius: 3px;
+  color: #a0a0a0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 100ms ease;
+  font-size: 12px;
+}
+
+.action-btn:hover {
+  background-color: #1a1a1a;
+  border-color: #3a3a3a;
+}
+
+.delete-btn:hover {
+  background-color: rgba(255, 68, 68, 0.1);
+  border-color: #ff4444;
+  color: #ff4444;
+}
+
+.copy-btn:hover {
+  background-color: rgba(0, 255, 136, 0.1);
+  border-color: #00ff88;
+  color: #00ff88;
+}
+
+/* Handles */
+.react-flow__handle {
+  background-color: #3a3a3a;
+  border: 2px solid #1a1a1a;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  transition: all 150ms ease;
+}
+
+.react-flow__handle:hover {
+  background-color: #00ff88;
+  border-color: #1a1a1a;
+  box-shadow: 0 0 16px rgba(0, 255, 136, 0.5);
+  width: 16px;
+  height: 16px;
+  margin: -1px;
+}
+
+.custom-node.input .react-flow__handle {
+  background-color: #3b82f6;
+  opacity: 0.7;
+}
+
+.custom-node.input .react-flow__handle:hover {
+  background-color: #00ffff;
+  opacity: 1;
+}
+
+.custom-node.operation .react-flow__handle {
+  background-color: #8b5cf6;
+  opacity: 0.7;
+}
+
+.custom-node.operation .react-flow__handle:hover {
+  background-color: #00ffff;
+  opacity: 1;
+}
+
+.custom-node.output .react-flow__handle {
+  background-color: #10b981;
+  opacity: 0.7;
+}
+
+.custom-node.output .react-flow__handle:hover {
+  background-color: #00ffff;
+  opacity: 1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .custom-node {
+    min-width: 140px;
+  }
+
+  .node-content {
+    padding: 8px;
+    gap: 6px;
+  }
+
+  .node-title {
+    font-size: 11px;
+  }
+}

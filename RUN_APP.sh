@@ -1,0 +1,13 @@
+#!/bin/bash
+echo "🚀 Iniciando ShaderForge AI..."
+echo ""
+echo "📌 Backend en Terminal 1:"
+echo "cd src/backend && source venv/bin/activate && python main.py"
+echo ""
+echo "📌 Frontend en Terminal 2:"
+echo "cd src/frontend && npm run dev"
+echo ""
+echo "✅ Acceso:"
+echo "Backend API: http://localhost:8000"
+echo "Frontend: http://localhost:5173"
+echo "API Docs: http://localhost:8000/docs"
