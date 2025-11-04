@@ -442,17 +442,24 @@ float simplex(vec2 p) {
         
         main_code = "\n  ".join(code_lines)
         
-        uniforms_str = "\n".join([
-            f"uniform {('vec2' if u == 'iResolution' else 'float')} {u};"
-            for u in sorted(self.required_uniforms)
-        ])
+        # Declaraciones de uniformes
+        uniforms_decl = []
+        for u in sorted(self.required_uniforms):
+            uniform_type = 'vec2' if u == 'iResolution' else 'float'
+            uniforms_decl.append(f"uniform {uniform_type} {u};")
+        uniforms_str = "\n".join(uniforms_decl)
         
-        full_code = f"""
-{helper_funcs}
-
-void mainImage(out vec4 fragColor, in vec2 fragCoord) {{
+        # Construir código completo con uniforms
+        parts = []
+        if uniforms_str:
+            parts.append(uniforms_str)
+        if helper_funcs:
+            parts.append(helper_funcs)
+        
+        parts.append(f"""void mainImage(out vec4 fragColor, in vec2 fragCoord) {{
   {main_code}
-}}
-""".strip()
+}}""")
+        
+        full_code = "\n\n".join(parts).strip()
         
         return full_code
