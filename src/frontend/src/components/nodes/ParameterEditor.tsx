@@ -1,4 +1,4 @@
-import { NodeParameter, ParameterType } from '../../types/nodes'
+import { NodeParameter } from '../../types/nodes'
 import './ParameterEditor.css'
 
 interface ParameterEditorProps {

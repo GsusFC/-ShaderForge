@@ -30,6 +30,8 @@ export default function NodeEditor() {
   const [showPalette, setShowPalette] = useState(false)
   const [compiledCode, setCompiledCode] = useState<string>('')
   const [showPreview, setShowPreview] = useState(true)
+  const [isCompiling, setIsCompiling] = useState(false)
+  const [autoCompile, setAutoCompile] = useState(true)
 
   const { currentShaderCode, currentShaderName, isFromSearch, clearShader } = useShaderStore()
 
@@ -40,6 +42,45 @@ export default function NodeEditor() {
       setShowPreview(true)
     }
   }, [isFromSearch, currentShaderCode])
+
+  // Auto-compile with debounce when nodes/edges change
+  useEffect(() => {
+    if (!autoCompile || nodes.length === 0) return
+
+    const timeoutId = setTimeout(async () => {
+      if (isCompiling) return
+
+      try {
+        setIsCompiling(true)
+
+        const nodesWithParams = nodes.map((node: any) => ({
+          ...node,
+          parameters: node.data?.parameters || {},
+        }))
+
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/nodes/graph/compile`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            graph: { nodes: nodesWithParams, edges },
+            language: 'glsl',
+            optimize: true,
+          }),
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setCompiledCode(data.code)
+        }
+      } catch (error) {
+        console.error('Auto-compile error:', error)
+      } finally {
+        setIsCompiling(false)
+      }
+    }, 500) // 500ms debounce
+
+    return () => clearTimeout(timeoutId)
+  }, [nodes, edges, autoCompile, isCompiling])
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -90,7 +131,11 @@ export default function NodeEditor() {
   }, [setNodes, setEdges])
 
   const handleCompile = useCallback(async () => {
+    if (isCompiling || nodes.length === 0) return
+
     try {
+      setIsCompiling(true)
+
       // Prepare nodes with their parameters for compilation
       const nodesWithParams = nodes.map((node: any) => ({
         ...node,
@@ -111,13 +156,14 @@ export default function NodeEditor() {
         const data = await response.json()
         setCompiledCode(data.code)
       } else {
-        alert('Error compilando shader')
+        console.error('Error compilando shader')
       }
     } catch (error) {
       console.error('Compile error:', error)
-      alert('Error: ' + (error instanceof Error ? error.message : 'Unknown'))
+    } finally {
+      setIsCompiling(false)
     }
-  }, [nodes, edges])
+  }, [nodes, edges, isCompiling])
 
   return (
     <div className="w-full h-screen flex" style={{ backgroundColor: '#0a0a0a' }}>
@@ -171,12 +217,21 @@ export default function NodeEditor() {
               Preview
             </button>
             <button
+              onClick={() => setAutoCompile(!autoCompile)}
+              className={`btn ${autoCompile ? 'btn-success' : 'btn-primary'}`}
+              title={autoCompile ? 'Auto-compilación activa' : 'Auto-compilación desactivada'}
+            >
+              {autoCompile ? '⚡' : '⏸️'} Auto
+            </button>
+            <button
               onClick={handleCompile}
               className="btn btn-success"
-              title="Compilar a GLSL"
+              title="Compilar a GLSL manualmente"
+              disabled={isCompiling}
+              style={{ opacity: isCompiling ? 0.6 : 1 }}
             >
               <Code2 size={18} />
-              Compilar
+              {isCompiling ? 'Compilando...' : 'Compilar'}
             </button>
             <button
               onClick={handleClearGraph}
