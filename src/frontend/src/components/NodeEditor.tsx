@@ -253,7 +253,7 @@ export default function NodeEditor() {
         {/* Editor and Preview Container */}
         <div className="node-editor-main">
           {/* Editor Canvas */}
-          <div className={`canvas-area ${showPreview ? '' : 'full-width'} transition-all duration-300`} style={{ width: showPreview ? '50%' : '100%' }}>
+          <div className={`canvas-area transition-all duration-300`} style={{ width: showPreview ? '50%' : 'calc(100% - 400px)' }}>
             <ReactFlow
               nodes={nodes}
               edges={edges}
@@ -282,41 +282,33 @@ export default function NodeEditor() {
               <ShaderPreview shaderCode={compiledCode} />
             </div>
           )}
-        </div>
 
-        {/* Compiled Code Panel - Always show when available */}
-        {compiledCode && (
-          <div className="code-panel" style={{ display: showPreview ? 'none' : 'block' }}>
+          {/* Compiled Code Panel - Always show on the right */}
+          <div className="code-panel" style={{ width: '400px', overflowY: 'auto', borderLeft: '1px solid #333' }}>
             <div className="code-panel-header">
-              <h3>Código GLSL Compilado</h3>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(compiledCode)
-                  alert('✓ Código copiado')
-                }}
-                className="btn btn-primary"
-                style={{ padding: '6px 12px', fontSize: '12px' }}
-              >
-                📋 Copiar
-              </button>
+              <h3>📋 Código GLSL</h3>
+              {compiledCode && (
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(compiledCode)
+                    alert('✓ Copiado')
+                  }}
+                  className="btn btn-primary"
+                  style={{ padding: '4px 8px', fontSize: '11px' }}
+                >
+                  Copiar
+                </button>
+              )}
             </div>
             <div className="code-block">
-              <pre>{compiledCode}</pre>
+              {compiledCode ? (
+                <pre style={{ fontSize: '11px', margin: 0 }}>{compiledCode}</pre>
+              ) : (
+                <p style={{ color: '#666', padding: '20px' }}>Compila un shader para ver el código aquí</p>
+              )}
             </div>
           </div>
-        )}
-        
-        {/* Show code panel hint */}
-        {!compiledCode && !showPreview && (
-          <div className="code-panel">
-            <div className="code-panel-header">
-              <h3>Código GLSL Compilado</h3>
-            </div>
-            <div className="code-block" style={{ color: '#666' }}>
-              Compila un shader para ver el código GLSL generado aquí
-            </div>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   )
