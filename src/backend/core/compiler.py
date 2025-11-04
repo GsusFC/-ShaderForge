@@ -11,7 +11,7 @@ class CompiledShader:
     warnings: List[str] = field(default_factory=list)
 
 class GLSLCompiler:
-    """Compila grafos de nodos a código GLSL"""
+    """Compila grafos de nodos a cรณdigo GLSL"""
     
     # Definiciones de nodos y sus funciones GLSL
     NODE_FUNCTIONS = {
@@ -160,7 +160,7 @@ float simplex(vec2 p) {
                     error="; ".join(self.errors) if self.errors else "Unknown error"
                 )
             
-            # Ordenar nodos topológicamente
+            # Ordenar nodos topolรณgicamente
             sorted_nodes = self._topological_sort(graph)
             if sorted_nodes is None:
                 return CompiledShader(
@@ -173,7 +173,7 @@ float simplex(vec2 p) {
             # Analizar tipos de entrada
             self._analyze_input_types(graph, sorted_nodes)
             
-            # Generar código
+            # Generar cรณdigo
             glsl_code = self._generate_glsl(sorted_nodes, graph)
             
             # Crear uniforms list
@@ -220,7 +220,7 @@ float simplex(vec2 p) {
         return True
     
     def _topological_sort(self, graph: Dict[str, Any]) -> Optional[List[Dict]]:
-        """Ordena nodos topológicamente (validar no hay ciclos)"""
+        """Ordena nodos topolรณgicamente (validar no hay ciclos)"""
         nodes = graph.get('nodes', [])
         edges = graph.get('edges', [])
         
@@ -324,7 +324,7 @@ float simplex(vec2 p) {
                         self.node_input_types[node_id].append('float')
     
     def _generate_glsl(self, sorted_nodes: List[Dict], graph: Dict[str, Any]) -> str:
-        """Genera código GLSL desde nodos ordenados"""
+        """Genera cรณdigo GLSL desde nodos ordenados"""
         edges = graph.get('edges', [])
         
         # Crear mapa de conexiones
@@ -351,7 +351,7 @@ float simplex(vec2 p) {
                     edge.get('sourceHandle', 'output')
                 )
         
-        # Generar líneas de código
+        # Generar lรญneas de cรณdigo
         code_lines = []
         
         for node in sorted_nodes:
@@ -382,15 +382,18 @@ float simplex(vec2 p) {
             
             self.node_outputs[node_id] = (output_var, output_type)
             
-            # Generar código del nodo
+            # Generar cรณdigo del nodo
             glsl_template = node_def['glsl']
             glsl_line = glsl_template.replace('{output}', output_var)
             glsl_line = glsl_line.replace('{type}', output_type)
             
             # Reemplazar inputs
             for i in range(node_def.get('inputs', 0)):
-                handle = f'input{i+1}' if i > 0 else 'input'
-                placeholder = f'{{input{i+1}}}'
+                input_num = i + 1
+                # Handles: 'input' para el primero, 'input1', 'input2', etc. para los demás
+                handle = f'input{i}' if i > 0 else 'input'
+                # Placeholders siempre numerados: {input1}, {input2}, etc.
+                placeholder = f'{{input{input_num}}}'
                 
                 # Buscar variable de entrada desde el grafo
                 if node_id in input_connections and handle in input_connections[node_id]:
@@ -403,18 +406,19 @@ float simplex(vec2 p) {
                 else:
                     # Usar parámetro del nodo si existe
                     params = node['data'].get('parameters', {})
-                    if f'input{i+1}' in params:
-                        glsl_line = glsl_line.replace(placeholder, str(params[f'input{i+1}']))
+                    param_key = f'input{i}' if i > 0 else 'input'
+                    if param_key in params:
+                        glsl_line = glsl_line.replace(placeholder, str(params[param_key]))
                     else:
                         glsl_line = glsl_line.replace(placeholder, "0.0")
             
-            # Reemplazar todos los parámetros en el template
+            # Reemplazar todos los parรกmetros en el template
             node_params = node['data'].get('parameters', {})
             for param_name, param_value in node_params.items():
                 placeholder = f'{{{param_name}}}'
                 glsl_line = glsl_line.replace(placeholder, str(param_value))
             
-            # Reemplazar parámetros constantes (para nodos de constantes)
+            # Reemplazar parรกmetros constantes (para nodos de constantes)
             if node_type == 'float_constant':
                 value = node_params.get('value', 0.0)
                 glsl_line = glsl_line.replace('{value}', str(value))
@@ -433,7 +437,7 @@ float simplex(vec2 p) {
             
             code_lines.append(glsl_line)
         
-        # Armar código final
+        # Armar cรณdigo final
         helper_funcs = "\n".join([
             self.HELPER_FUNCTIONS[func]
             for func in self.required_functions
@@ -449,7 +453,7 @@ float simplex(vec2 p) {
             uniforms_decl.append(f"uniform {uniform_type} {u};")
         uniforms_str = "\n".join(uniforms_decl)
         
-        # Construir código completo con uniforms
+        # Construir cรณdigo completo con uniforms
         parts = []
         if uniforms_str:
             parts.append(uniforms_str)
