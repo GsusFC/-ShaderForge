@@ -372,8 +372,9 @@ float simplex(vec2 p) {
             for func in node_def.get('functions', []):
                 self.required_functions.add(func)
             
-            # Generar variable de salida
-            output_var = f"v_{node_id}"
+            # Generar variable de salida (sanitizar node_id: reemplazar guiones con guiones bajos)
+            safe_node_id = node_id.replace('-', '_')
+            output_var = f"v_{safe_node_id}"
             output_type = node_def.get('output_type', 'float')
             
             if output_type == 'mixed' and self.node_input_types.get(node_id):
