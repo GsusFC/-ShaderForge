@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 from core.compiler import GLSLCompiler
+from core.glsl_validator import GLSLValidator, ValidationResult
 
 router = APIRouter(prefix="/api/v1/nodes", tags=["nodes"])
 
@@ -235,7 +236,7 @@ async def validate_graph(graph: NodeGraph):
 async def get_compiler_stats():
     """Obtiene estadísticas del compilador"""
     compiler = GLSLCompiler()
-    
+
     return {
         "supported_nodes": len(compiler.NODE_FUNCTIONS),
         "helper_functions": len(compiler.HELPER_FUNCTIONS),
@@ -245,3 +246,105 @@ async def get_compiler_stats():
             "outputs": sum(1 for n in compiler.NODE_FUNCTIONS.values() if n.get('outputs', 0) == 0)
         }
     }
+
+
+# ===== ENDPOINTS DE VALIDACIÓN =====
+
+class ValidateCodeRequest(BaseModel):
+    code: str
+
+class ValidateCodeResponse(BaseModel):
+    is_valid: bool
+    errors: List[str]
+    warnings: List[str]
+    suggestions: List[str]
+
+@router.post("/shader/validate", response_model=ValidateCodeResponse)
+async def validate_shader_code(request: ValidateCodeRequest):
+    """
+    Valida sintaxis de código GLSL
+
+    Este endpoint verifica:
+    - Sintaxis GLSL básica
+    - Declaración de variables antes de uso
+    - Tipos consistentes
+    - Paréntesis y llaves balanceadas
+    - Funciones helper disponibles
+    """
+    try:
+        validator = GLSLValidator()
+        result = validator.validate(request.code)
+
+        return ValidateCodeResponse(
+            is_valid=result.is_valid,
+            errors=result.errors,
+            warnings=result.warnings,
+            suggestions=result.suggestions
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Validation failed: {str(e)}"
+        )
+
+
+@router.post("/graph/compile-and-validate")
+async def compile_and_validate(request: CompileRequest):
+    """
+    Compila un grafo Y valida el código GLSL generado
+
+    Combina compilación + validación en un solo endpoint
+    """
+    import time
+
+    start_time = time.time()
+
+    try:
+        # 1. Compilar
+        graph_dict = {
+            "nodes": request.graph.nodes,
+            "edges": request.graph.edges
+        }
+
+        compiler = GLSLCompiler()
+        compile_result = compiler.compile(graph_dict)
+
+        if compile_result.error:
+            return {
+                "success": False,
+                "compilation": {
+                    "code": "",
+                    "error": compile_result.error,
+                    "warnings": compile_result.warnings
+                },
+                "validation": None,
+                "totalTime": time.time() - start_time
+            }
+
+        # 2. Validar código generado
+        validator = GLSLValidator()
+        validation_result = validator.validate(compile_result.code)
+
+        return {
+            "success": validation_result.is_valid,
+            "compilation": {
+                "code": compile_result.code,
+                "uniforms": compile_result.uniforms,
+                "functions": compile_result.functions,
+                "warnings": compile_result.warnings
+            },
+            "validation": {
+                "is_valid": validation_result.is_valid,
+                "errors": validation_result.errors,
+                "warnings": validation_result.warnings,
+                "suggestions": validation_result.suggestions
+            },
+            "totalTime": time.time() - start_time
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Compile and validate failed: {str(e)}"
+        )

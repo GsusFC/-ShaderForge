@@ -33,6 +33,9 @@ export default function NodeEditor() {
   const [isCompiling, setIsCompiling] = useState(false)
   const [autoCompile, setAutoCompile] = useState(true)
   const isCompilingRef = useRef(false)
+  const [validationErrors, setValidationErrors] = useState<string[]>([])
+  const [validationWarnings, setValidationWarnings] = useState<string[]>([])
+  const [showValidation, setShowValidation] = useState(false)
 
   const { currentShaderCode, currentShaderName, isFromSearch, clearShader } = useShaderStore()
 
@@ -61,7 +64,8 @@ export default function NodeEditor() {
           parameters: node.data?.parameters || {},
         }))
 
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/nodes/graph/compile`, {
+        // Usar el nuevo endpoint que compila Y valida
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/nodes/graph/compile-and-validate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -73,7 +77,17 @@ export default function NodeEditor() {
 
         if (response.ok) {
           const data = await response.json()
-          setCompiledCode(data.code)
+
+          if (data.compilation) {
+            setCompiledCode(data.compilation.code)
+          }
+
+          // Guardar resultados de validación
+          if (data.validation) {
+            setValidationErrors(data.validation.errors || [])
+            setValidationWarnings(data.validation.warnings || [])
+            setShowValidation(data.validation.errors.length > 0 || data.validation.warnings.length > 0)
+          }
         }
       } catch (error) {
         console.error('Auto-compile error:', error)
@@ -287,19 +301,112 @@ export default function NodeEditor() {
           <div className="code-panel" style={{ width: '400px', overflowY: 'auto', borderLeft: '1px solid #333' }}>
             <div className="code-panel-header">
               <h3>📋 Código GLSL</h3>
-              {compiledCode && (
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(compiledCode)
-                    alert('✓ Copiado')
-                  }}
-                  className="btn btn-primary"
-                  style={{ padding: '4px 8px', fontSize: '11px' }}
-                >
-                  Copiar
-                </button>
-              )}
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                {/* Validation indicator */}
+                {showValidation && (
+                  <div style={{
+                    display: 'flex',
+                    gap: '8px',
+                    fontSize: '11px',
+                    marginRight: '12px'
+                  }}>
+                    {validationErrors.length > 0 && (
+                      <span style={{ color: '#ff4444' }}>
+                        ❌ {validationErrors.length} error{validationErrors.length > 1 ? 's' : ''}
+                      </span>
+                    )}
+                    {validationWarnings.length > 0 && (
+                      <span style={{ color: '#ffa500' }}>
+                        ⚠️ {validationWarnings.length} warning{validationWarnings.length > 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </div>
+                )}
+                {!showValidation && compiledCode && (
+                  <span style={{ color: '#00ff88', fontSize: '11px' }}>
+                    ✓ Válido
+                  </span>
+                )}
+                {compiledCode && (
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(compiledCode)
+                      alert('✓ Copiado')
+                    }}
+                    className="btn btn-primary"
+                    style={{ padding: '4px 8px', fontSize: '11px' }}
+                  >
+                    Copiar
+                  </button>
+                )}
+              </div>
             </div>
+
+            {/* Validation Panel */}
+            {showValidation && (
+              <div style={{
+                padding: '12px',
+                backgroundColor: '#1a1a1a',
+                borderBottom: '1px solid #3a3a3a',
+                maxHeight: '150px',
+                overflowY: 'auto'
+              }}>
+                {validationErrors.length > 0 && (
+                  <div style={{ marginBottom: '12px' }}>
+                    <div style={{
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      color: '#ff4444',
+                      marginBottom: '6px'
+                    }}>
+                      Errores:
+                    </div>
+                    {validationErrors.map((error, idx) => (
+                      <div key={idx} style={{
+                        fontSize: '11px',
+                        color: '#ff8888',
+                        padding: '4px 8px',
+                        backgroundColor: 'rgba(255, 68, 68, 0.1)',
+                        border: '1px solid rgba(255, 68, 68, 0.3)',
+                        borderRadius: '3px',
+                        marginBottom: '4px',
+                        fontFamily: 'monospace'
+                      }}>
+                        • {error}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {validationWarnings.length > 0 && (
+                  <div>
+                    <div style={{
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      color: '#ffa500',
+                      marginBottom: '6px'
+                    }}>
+                      Advertencias:
+                    </div>
+                    {validationWarnings.map((warning, idx) => (
+                      <div key={idx} style={{
+                        fontSize: '11px',
+                        color: '#ffcc88',
+                        padding: '4px 8px',
+                        backgroundColor: 'rgba(255, 165, 0, 0.1)',
+                        border: '1px solid rgba(255, 165, 0, 0.3)',
+                        borderRadius: '3px',
+                        marginBottom: '4px',
+                        fontFamily: 'monospace'
+                      }}>
+                        • {warning}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="code-block">
               {compiledCode ? (
                 <pre style={{ fontSize: '11px', margin: 0 }}>{compiledCode}</pre>
