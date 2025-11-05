@@ -1,5 +1,7 @@
 // Definiciones mejoradas de nodos con parámetros editables
 
+import { MATH_NODES, VECTOR_NODES, CONVERSION_NODES } from './nodeLibrary'
+
 export type NodeCategory = 'input' | 'operation' | 'output' | 'color' | 'vector' | 'texture' | 'utility'
 export type ParameterType = 'float' | 'int' | 'vec2' | 'vec3' | 'vec4' | 'color' | 'select'
 
@@ -72,7 +74,7 @@ export const NODE_TYPES = {
   NORMAL_OUTPUT: 'normal_output',
 } as const
 
-export const NODE_DEFINITIONS: Record<string, NodeDefinition> = {
+const BASE_NODE_DEFINITIONS: Record<string, NodeDefinition> = {
   // ===== INPUTS =====
   uv_input: {
     id: 'uv_input',
@@ -486,6 +488,14 @@ export const NODE_DEFINITIONS: Record<string, NodeDefinition> = {
     parameters: [],
     glslFunction: 'fragColor = vec4(color, 1.0);',
   },
+}
+
+// Combinar todos los nodos en un único objeto
+export const NODE_DEFINITIONS: Record<string, NodeDefinition> = {
+  ...BASE_NODE_DEFINITIONS,
+  ...MATH_NODES,
+  ...VECTOR_NODES,
+  ...CONVERSION_NODES,
 }
 
 // Tipos de datos para validación

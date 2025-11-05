@@ -112,6 +112,234 @@ class GLSLCompiler:
             'inputs': 1,
             'outputs': 1,
             'output_type': 'vec3'
+        },
+
+        # ===== MATH FUNCTIONS =====
+        'sin': {
+            'glsl': '{type} {output} = sin({input1});',
+            'inputs': 1,
+            'outputs': 1,
+            'infer_type': True,
+            'output_type': 'mixed'
+        },
+        'cos': {
+            'glsl': '{type} {output} = cos({input1});',
+            'inputs': 1,
+            'outputs': 1,
+            'infer_type': True,
+            'output_type': 'mixed'
+        },
+        'tan': {
+            'glsl': '{type} {output} = tan({input1});',
+            'inputs': 1,
+            'outputs': 1,
+            'infer_type': True,
+            'output_type': 'mixed'
+        },
+        'pow': {
+            'glsl': '{type} {output} = pow({input1}, {input2});',
+            'inputs': 2,
+            'outputs': 1,
+            'infer_type': True,
+            'output_type': 'mixed'
+        },
+        'sqrt': {
+            'glsl': '{type} {output} = sqrt({input1});',
+            'inputs': 1,
+            'outputs': 1,
+            'infer_type': True,
+            'output_type': 'mixed'
+        },
+        'abs': {
+            'glsl': '{type} {output} = abs({input1});',
+            'inputs': 1,
+            'outputs': 1,
+            'infer_type': True,
+            'output_type': 'mixed'
+        },
+        'floor': {
+            'glsl': '{type} {output} = floor({input1});',
+            'inputs': 1,
+            'outputs': 1,
+            'infer_type': True,
+            'output_type': 'mixed'
+        },
+        'ceil': {
+            'glsl': '{type} {output} = ceil({input1});',
+            'inputs': 1,
+            'outputs': 1,
+            'infer_type': True,
+            'output_type': 'mixed'
+        },
+        'fract': {
+            'glsl': '{type} {output} = fract({input1});',
+            'inputs': 1,
+            'outputs': 1,
+            'infer_type': True,
+            'output_type': 'mixed'
+        },
+        'mod': {
+            'glsl': '{type} {output} = mod({input1}, {input2});',
+            'inputs': 2,
+            'outputs': 1,
+            'infer_type': True,
+            'output_type': 'mixed'
+        },
+        'min': {
+            'glsl': '{type} {output} = min({input1}, {input2});',
+            'inputs': 2,
+            'outputs': 1,
+            'infer_type': True,
+            'output_type': 'mixed'
+        },
+        'max': {
+            'glsl': '{type} {output} = max({input1}, {input2});',
+            'inputs': 2,
+            'outputs': 1,
+            'infer_type': True,
+            'output_type': 'mixed'
+        },
+        'subtract': {
+            'glsl': '{type} {output} = {input1} - {input2};',
+            'inputs': 2,
+            'outputs': 1,
+            'infer_type': True,
+            'output_type': 'mixed'
+        },
+        'divide': {
+            'glsl': '{type} {output} = {input1} / max({input2}, 0.001);',
+            'inputs': 2,
+            'outputs': 1,
+            'infer_type': True,
+            'output_type': 'mixed'
+        },
+        'negate': {
+            'glsl': '{type} {output} = -{input1};',
+            'inputs': 1,
+            'outputs': 1,
+            'infer_type': True,
+            'output_type': 'mixed'
+        },
+
+        # ===== VECTOR OPERATIONS =====
+        'dot': {
+            'glsl': 'float {output} = dot({input1}, {input2});',
+            'inputs': 2,
+            'outputs': 1,
+            'output_type': 'float'
+        },
+        'cross': {
+            'glsl': 'vec3 {output} = cross({input1}, {input2});',
+            'inputs': 2,
+            'outputs': 1,
+            'output_type': 'vec3'
+        },
+        'normalize': {
+            'glsl': '{type} {output} = normalize({input1});',
+            'inputs': 1,
+            'outputs': 1,
+            'infer_type': True,
+            'output_type': 'mixed'
+        },
+        'length': {
+            'glsl': 'float {output} = length({input1});',
+            'inputs': 1,
+            'outputs': 1,
+            'output_type': 'float'
+        },
+        'distance': {
+            'glsl': 'float {output} = distance({input1}, {input2});',
+            'inputs': 2,
+            'outputs': 1,
+            'output_type': 'float'
+        },
+        'reflect': {
+            'glsl': '{type} {output} = reflect({input1}, {input2});',
+            'inputs': 2,
+            'outputs': 1,
+            'infer_type': True,
+            'output_type': 'mixed'
+        },
+
+        # ===== TYPE CONVERSIONS =====
+        'float_to_vec2': {
+            'glsl': 'vec2 {output} = vec2({input1});',
+            'inputs': 1,
+            'outputs': 1,
+            'output_type': 'vec2'
+        },
+        'float_to_vec3': {
+            'glsl': 'vec3 {output} = vec3({input1});',
+            'inputs': 1,
+            'outputs': 1,
+            'output_type': 'vec3'
+        },
+        'float_to_vec4': {
+            'glsl': 'vec4 {output} = vec4({input1});',
+            'inputs': 1,
+            'outputs': 1,
+            'output_type': 'vec4'
+        },
+        'vec3_to_vec4': {
+            'glsl': 'vec4 {output} = vec4({input1}, {w});',
+            'inputs': 1,
+            'outputs': 1,
+            'output_type': 'vec4'
+        },
+        'vec2_construct': {
+            'glsl': 'vec2 {output} = vec2({input1}, {input2});',
+            'inputs': 2,
+            'outputs': 1,
+            'output_type': 'vec2'
+        },
+        'vec4_construct': {
+            'glsl': 'vec4 {output} = vec4({input1}, {input2}, {input3}, {input4});',
+            'inputs': 4,
+            'outputs': 1,
+            'output_type': 'vec4'
+        },
+
+        # ===== COMPONENT ACCESS =====
+        'split_vec2': {
+            'glsl': 'float {output} = {input1}.{component};',
+            'inputs': 1,
+            'outputs': 1,
+            'output_type': 'float'
+        },
+        'split_vec3': {
+            'glsl': 'float {output} = {input1}.{component};',
+            'inputs': 1,
+            'outputs': 1,
+            'output_type': 'float'
+        },
+        'split_vec4': {
+            'glsl': 'float {output} = {input1}.{component};',
+            'inputs': 1,
+            'outputs': 1,
+            'output_type': 'float'
+        },
+
+        # ===== SMOOTHING & INTERPOLATION =====
+        'smoothstep': {
+            'glsl': '{type} {output} = smoothstep({input1}, {input2}, {input3});',
+            'inputs': 3,
+            'outputs': 1,
+            'infer_type': True,
+            'output_type': 'mixed'
+        },
+        'step': {
+            'glsl': '{type} {output} = step({input1}, {input2});',
+            'inputs': 2,
+            'outputs': 1,
+            'infer_type': True,
+            'output_type': 'mixed'
+        },
+        'sign': {
+            'glsl': '{type} {output} = sign({input1});',
+            'inputs': 1,
+            'outputs': 1,
+            'infer_type': True,
+            'output_type': 'mixed'
         }
     }
     
