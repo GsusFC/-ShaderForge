@@ -1,12 +1,13 @@
 import { useRef, useState, useEffect, useMemo } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
 import { RotateCcw, AlertCircle } from 'lucide-react'
+import { transformShaderToStandardGLSL } from '../services/shaderCompiler'
 import '../styles/ShaderPreview.css'
 
 interface ShaderPreviewProps {
   shaderCode?: string
+  uniforms?: any[]
 }
 
 // Default fallback shader (simple gradient)
@@ -29,30 +30,76 @@ varying vec2 vUv;
 
 void main() {
   vUv = uv;
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  gl_Position = vec4(position, 1.0);
 }
 `
 
 interface ShaderMeshProps {
   fragmentShader: string
+  uniforms?: any[]
   onError: (error: string) => void
   onSuccess: () => void
 }
 
-function ShaderMesh({ fragmentShader, onError, onSuccess }: ShaderMeshProps) {
+function ShaderMesh({ fragmentShader, uniforms, onError, onSuccess }: ShaderMeshProps) {
   const meshRef = useRef<THREE.Mesh>(null)
 
-  // Create shader material with uniforms
+  // Transform and create shader material with uniforms
   const shaderMaterial = useMemo(() => {
     try {
+      // Transform Shadertoy-style code to standard GLSL
+      const transformedShader = transformShaderToStandardGLSL(fragmentShader || DEFAULT_FRAGMENT_SHADER)
+
+      // Create base uniforms
+      const baseUniforms: Record<string, THREE.IUniform> = {
+        iTime: { value: 0 },
+        iResolution: { value: new THREE.Vector2(800, 600) },
+        iMouse: { value: new THREE.Vector2(0, 0) },
+      }
+
+      // Add custom uniforms from compilation
+      if (uniforms && Array.isArray(uniforms)) {
+        for (const uniform of uniforms) {
+          // Skip built-in uniforms
+          if (['iTime', 'iResolution', 'iMouse'].includes(uniform.name)) {
+            continue
+          }
+
+          // Add custom uniform
+          let value: any
+          switch (uniform.type) {
+            case 'float':
+              value = uniform.value ?? 0.0
+              break
+            case 'vec2':
+              value = new THREE.Vector2(uniform.value?.[0] ?? 0, uniform.value?.[1] ?? 0)
+              break
+            case 'vec3':
+              value = new THREE.Vector3(
+                uniform.value?.[0] ?? 0,
+                uniform.value?.[1] ?? 0,
+                uniform.value?.[2] ?? 0
+              )
+              break
+            case 'vec4':
+              value = new THREE.Vector4(
+                uniform.value?.[0] ?? 0,
+                uniform.value?.[1] ?? 0,
+                uniform.value?.[2] ?? 0,
+                uniform.value?.[3] ?? 1
+              )
+              break
+            default:
+              value = uniform.value ?? 0.0
+          }
+          baseUniforms[uniform.name] = { value }
+        }
+      }
+
       const material = new THREE.ShaderMaterial({
         vertexShader: DEFAULT_VERTEX_SHADER,
-        fragmentShader: fragmentShader || DEFAULT_FRAGMENT_SHADER,
-        uniforms: {
-          iTime: { value: 0 },
-          iResolution: { value: new THREE.Vector2(800, 600) },
-          iMouse: { value: new THREE.Vector2(0, 0) },
-        },
+        fragmentShader: transformedShader,
+        uniforms: baseUniforms,
         side: THREE.DoubleSide,
       })
 
@@ -70,7 +117,7 @@ function ShaderMesh({ fragmentShader, onError, onSuccess }: ShaderMeshProps) {
         },
       })
     }
-  }, [fragmentShader, onError, onSuccess])
+  }, [fragmentShader, uniforms, onError, onSuccess])
 
   // Animate uniforms
   useFrame((state) => {
@@ -94,12 +141,12 @@ function ShaderMesh({ fragmentShader, onError, onSuccess }: ShaderMeshProps) {
 
   return (
     <mesh ref={meshRef} material={shaderMaterial}>
-      <sphereGeometry args={[1, 64, 64]} />
+      <planeGeometry args={[2, 2]} />
     </mesh>
   )
 }
 
-export default function ShaderPreview({ shaderCode }: ShaderPreviewProps) {
+export default function ShaderPreview({ shaderCode, uniforms }: ShaderPreviewProps) {
   const [error, setError] = useState<string | null>(null)
   const [fps, setFps] = useState(60)
   const [lastFrameTime, setLastFrameTime] = useState(Date.now())
@@ -155,7 +202,8 @@ export default function ShaderPreview({ shaderCode }: ShaderPreviewProps) {
       <div className="preview-container">
         {hasShaderCode ? (
           <Canvas
-            camera={{ position: [0, 0, 3], fov: 50 }}
+            orthographic
+            camera={{ position: [0, 0, 1], zoom: 1 }}
             gl={{
               antialias: true,
               alpha: true,
@@ -169,25 +217,12 @@ export default function ShaderPreview({ shaderCode }: ShaderPreviewProps) {
           >
             <color attach="background" args={['#000000']} />
 
-            {/* Lighting */}
-            <ambientLight intensity={0.5} />
-            <pointLight position={[10, 10, 10]} intensity={1} />
-
-            {/* Shader Mesh */}
+            {/* Shader Mesh - Fullscreen Quad */}
             <ShaderMesh
               fragmentShader={shaderCode}
+              uniforms={uniforms}
               onError={handleError}
               onSuccess={handleSuccess}
-            />
-
-            {/* Camera Controls */}
-            <OrbitControls
-              enableDamping
-              dampingFactor={0.05}
-              rotateSpeed={0.5}
-              zoomSpeed={0.8}
-              minDistance={1.5}
-              maxDistance={10}
             />
           </Canvas>
         ) : (

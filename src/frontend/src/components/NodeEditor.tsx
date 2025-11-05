@@ -29,6 +29,7 @@ export default function NodeEditor() {
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge[]>([])
   const [showPalette, setShowPalette] = useState(false)
   const [compiledCode, setCompiledCode] = useState<string>('')
+  const [compiledUniforms, setCompiledUniforms] = useState<any[]>([])
   const [showPreview, setShowPreview] = useState(true)
   const [isCompiling, setIsCompiling] = useState(false)
   const [autoCompile, setAutoCompile] = useState(true)
@@ -37,15 +38,16 @@ export default function NodeEditor() {
   const [validationWarnings, setValidationWarnings] = useState<string[]>([])
   const [showValidation, setShowValidation] = useState(false)
 
-  const { currentShaderCode, currentShaderName, isFromSearch, clearShader } = useShaderStore()
+  const { currentShaderCode, currentShaderName, currentShaderUniforms, isFromSearch, clearShader } = useShaderStore()
 
   // Load shader from search into preview
   useEffect(() => {
     if (isFromSearch && currentShaderCode) {
       setCompiledCode(currentShaderCode)
+      setCompiledUniforms(currentShaderUniforms || [])
       setShowPreview(true)
     }
-  }, [isFromSearch, currentShaderCode])
+  }, [isFromSearch, currentShaderCode, currentShaderUniforms])
 
   // Auto-compile with debounce when nodes/edges change
   useEffect(() => {
@@ -80,6 +82,7 @@ export default function NodeEditor() {
 
           if (data.compilation) {
             setCompiledCode(data.compilation.code)
+            setCompiledUniforms(data.compilation.uniforms || [])
           }
 
           // Guardar resultados de validación
@@ -145,6 +148,7 @@ export default function NodeEditor() {
       setNodes([])
       setEdges([])
       setCompiledCode('')
+      setCompiledUniforms([])
     }
   }, [setNodes, setEdges])
 
@@ -161,7 +165,7 @@ export default function NodeEditor() {
         parameters: node.data?.parameters || {},
       }))
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/nodes/graph/compile`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/nodes/graph/compile-and-validate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -173,7 +177,15 @@ export default function NodeEditor() {
 
       if (response.ok) {
         const data = await response.json()
-        setCompiledCode(data.code)
+        if (data.compilation) {
+          setCompiledCode(data.compilation.code)
+          setCompiledUniforms(data.compilation.uniforms || [])
+        }
+        if (data.validation) {
+          setValidationErrors(data.validation.errors || [])
+          setValidationWarnings(data.validation.warnings || [])
+          setShowValidation(data.validation.errors.length > 0 || data.validation.warnings.length > 0)
+        }
       } else {
         console.error('Error compilando shader')
       }
@@ -220,6 +232,7 @@ export default function NodeEditor() {
                   onClick={() => {
                     clearShader()
                     setCompiledCode('')
+                    setCompiledUniforms([])
                   }}
                   className="ml-2 hover:opacity-80"
                   title="Cerrar shader"
@@ -293,7 +306,7 @@ export default function NodeEditor() {
           {/* Shader Preview Panel */}
           {showPreview && (
             <div className="preview-panel">
-              <ShaderPreview shaderCode={compiledCode} />
+              <ShaderPreview shaderCode={compiledCode} uniforms={compiledUniforms} />
             </div>
           )}
 
