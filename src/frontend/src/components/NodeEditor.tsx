@@ -388,24 +388,25 @@ export default function NodeEditor() {
             )}
           </div>
 
-          {/* Bottom Section: Code Panel (Horizontal) */}
+          {/* Bottom Section: Code Panel (2 columnas: Código + Validación) */}
           <div style={{
-            height: '300px',
+            height: '250px',
             borderTop: '2px solid #444',
             display: 'flex',
             flexDirection: 'column',
             backgroundColor: '#1a1a1a',
             overflow: 'hidden'
           }}>
+            {/* Header */}
             <div className="code-panel-header" style={{
-              padding: '10px 16px',
+              padding: '8px 16px',
               borderBottom: '1px solid #333',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
               backgroundColor: '#1e1e1e'
             }}>
-              <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600 }}>📋 Código GLSL</h3>
+              <h3 style={{ margin: 0, fontSize: '13px', fontWeight: 600 }}>📋 Código GLSL</h3>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 {/* Validation indicator */}
                 {showValidation && (
@@ -447,85 +448,92 @@ export default function NodeEditor() {
               </div>
             </div>
 
-            {/* Validation Panel */}
-            {showValidation && (
-              <div style={{
-                padding: '12px',
-                backgroundColor: '#1a1a1a',
-                borderBottom: '1px solid #3a3a3a',
-                maxHeight: '100px',
-                overflowY: 'auto'
-              }}>
-                {validationErrors.length > 0 && (
-                  <div style={{ marginBottom: '12px' }}>
-                    <div style={{
-                      fontSize: '12px',
-                      fontWeight: 'bold',
-                      color: '#ff4444',
-                      marginBottom: '6px'
-                    }}>
-                      Errores:
-                    </div>
-                    {validationErrors.map((error, idx) => (
-                      <div key={idx} style={{
-                        fontSize: '11px',
-                        color: '#ff8888',
-                        padding: '4px 8px',
-                        backgroundColor: 'rgba(255, 68, 68, 0.1)',
-                        border: '1px solid rgba(255, 68, 68, 0.3)',
-                        borderRadius: '3px',
-                        marginBottom: '4px',
-                        fontFamily: 'monospace'
-                      }}>
-                        • {error}
-                      </div>
-                    ))}
-                  </div>
-                )}
+            {/* Content: 2 columnas (Código + Validación) */}
+            <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
 
-                {validationWarnings.length > 0 && (
-                  <div>
-                    <div style={{
-                      fontSize: '12px',
-                      fontWeight: 'bold',
-                      color: '#ffa500',
-                      marginBottom: '6px'
-                    }}>
-                      Advertencias:
-                    </div>
-                    {validationWarnings.map((warning, idx) => (
-                      <div key={idx} style={{
-                        fontSize: '11px',
-                        color: '#ffcc88',
-                        padding: '4px 8px',
-                        backgroundColor: 'rgba(255, 165, 0, 0.1)',
-                        border: '1px solid rgba(255, 165, 0, 0.3)',
-                        borderRadius: '3px',
-                        marginBottom: '4px',
-                        fontFamily: 'monospace'
-                      }}>
-                        • {warning}
-                      </div>
-                    ))}
-                  </div>
+              {/* Left: Code Block */}
+              <div className="code-block" style={{
+                flex: showValidation ? '0 0 70%' : '1',
+                overflowY: 'auto',
+                padding: '12px',
+                backgroundColor: '#0d0d0d',
+                borderRight: showValidation ? '1px solid #333' : 'none'
+              }}>
+                {compiledCode ? (
+                  <pre style={{ fontSize: '11px', margin: 0, whiteSpace: 'pre', overflowX: 'auto' }}>{compiledCode}</pre>
+                ) : (
+                  <p style={{ color: '#666', padding: '20px', textAlign: 'center' }}>
+                    Compila un shader para ver el código aquí
+                  </p>
                 )}
               </div>
-            )}
 
-            {/* Code Block */}
-            <div className="code-block" style={{
-              flex: 1,
-              overflowY: 'auto',
-              padding: '12px',
-              backgroundColor: '#0d0d0d'
-            }}>
-              {compiledCode ? (
-                <pre style={{ fontSize: '11px', margin: 0, whiteSpace: 'pre', overflowX: 'auto' }}>{compiledCode}</pre>
-              ) : (
-                <p style={{ color: '#666', padding: '20px', textAlign: 'center' }}>
-                  Compila un shader para ver el código aquí
-                </p>
+              {/* Right: Validation Panel */}
+              {showValidation && (
+                <div style={{
+                  flex: '0 0 30%',
+                  padding: '12px',
+                  backgroundColor: '#1a1a1a',
+                  overflowY: 'auto'
+                }}>
+                  {validationErrors.length > 0 && (
+                    <div style={{ marginBottom: validationWarnings.length > 0 ? '16px' : '0' }}>
+                      <div style={{
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                        color: '#ff4444',
+                        marginBottom: '8px'
+                      }}>
+                        Errores:
+                      </div>
+                      {validationErrors.map((error, idx) => (
+                        <div key={idx} style={{
+                          fontSize: '10px',
+                          color: '#ff8888',
+                          padding: '6px 8px',
+                          backgroundColor: 'rgba(255, 68, 68, 0.1)',
+                          border: '1px solid rgba(255, 68, 68, 0.3)',
+                          borderRadius: '3px',
+                          marginBottom: '6px',
+                          fontFamily: 'monospace',
+                          lineHeight: '1.4'
+                        }}>
+                          • {error}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {validationWarnings.length > 0 && (
+                    <div>
+                      <div style={{
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                        color: '#ffa500',
+                        marginBottom: '8px'
+                      }}>
+                        Advertencias:
+                      </div>
+                      {validationWarnings.map((warning, idx) => (
+                        <div key={idx} style={{
+                          fontSize: '10px',
+                          color: '#ffcc88',
+                          padding: '6px 8px',
+                          backgroundColor: 'rgba(255, 165, 0, 0.1)',
+                          border: '1px solid rgba(255, 165, 0, 0.3)',
+                          borderRadius: '3px',
+                          marginBottom: '6px',
+                          fontFamily: 'monospace',
+                          lineHeight: '1.4'
+                        }}>
+                          • {warning}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
+
             </div>
           </div>
         </div>
