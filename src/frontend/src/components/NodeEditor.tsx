@@ -12,7 +12,7 @@ import ReactFlow, {
   Panel,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
-import { ChevronDown, Trash2, Code2, Eye, EyeOff } from 'lucide-react'
+import { ChevronDown, Trash2, Code2, Eye, EyeOff, Lightbulb } from 'lucide-react'
 import CustomNode from './nodes/CustomNode'
 import NodePalette from './NodePalette'
 import ShaderPreview from './ShaderPreview'
@@ -152,6 +152,71 @@ export default function NodeEditor() {
     }
   }, [setNodes, setEdges])
 
+  const handleLoadExample = useCallback(() => {
+    // Create a simple example shader: UV → Add → Fragment Output
+    const exampleNodes: Node[] = [
+      {
+        id: 'example-uv',
+        type: 'shaderNode',
+        position: { x: 100, y: 200 },
+        data: {
+          label: 'UV Input',
+          description: 'Coordenadas UV del vértice',
+          category: 'input',
+          type: 'uv_input',
+          color: '#4ade80',
+          parameters: {},
+        },
+      },
+      {
+        id: 'example-add',
+        type: 'shaderNode',
+        position: { x: 350, y: 200 },
+        data: {
+          label: 'Add',
+          description: 'Suma dos valores',
+          category: 'math',
+          type: 'add',
+          color: '#fbbf24',
+          parameters: {},
+        },
+      },
+      {
+        id: 'example-output',
+        type: 'shaderNode',
+        position: { x: 600, y: 200 },
+        data: {
+          label: 'Fragment Output',
+          description: 'Salida del fragment shader',
+          category: 'output',
+          type: 'fragment_output',
+          color: '#f87171',
+          parameters: {},
+        },
+      },
+    ]
+
+    const exampleEdges: Edge[] = [
+      {
+        id: 'e-uv-add',
+        source: 'example-uv',
+        target: 'example-add',
+        sourceHandle: 'output',
+        targetHandle: 'input',
+      },
+      {
+        id: 'e-add-output',
+        source: 'example-add',
+        target: 'example-output',
+        sourceHandle: 'output',
+        targetHandle: 'input',
+      },
+    ]
+
+    setNodes(exampleNodes)
+    setEdges(exampleEdges)
+  }, [setNodes, setEdges])
+
   const handleCompile = useCallback(async () => {
     if (isCompilingRef.current || nodes.length === 0) return
 
@@ -215,6 +280,14 @@ export default function NodeEditor() {
             >
               <ChevronDown size={18} />
               Nodos
+            </button>
+            <button
+              onClick={handleLoadExample}
+              className="btn btn-primary"
+              title="Cargar shader de ejemplo"
+            >
+              <Lightbulb size={18} />
+              Ejemplo
             </button>
             <div className="stats-badge">
               Nodos: <span>{nodes.length}</span>
