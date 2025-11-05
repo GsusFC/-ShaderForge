@@ -380,6 +380,29 @@ export const NODE_DEFINITIONS: Record<string, NodeDefinition> = {
     glslFunction: 'vec3 vec = vec3(x, y, z);',
   },
 
+  vec2_to_vec3: {
+    id: 'vec2_to_vec3',
+    label: 'Vec2→Vec3',
+    description: 'Convierte vec2 a vec3 (añade componente Z)',
+    category: 'vector',
+    color: '#06b6d4',
+    inputs: [{ name: 'vec2', type: 'vec2' }],
+    outputs: [{ name: 'vec3', type: 'vec3' }],
+    parameters: [
+      {
+        name: 'z',
+        label: 'Z',
+        type: 'float',
+        default: 0.0,
+        min: -10,
+        max: 10,
+        step: 0.1,
+        description: 'Componente Z del vector',
+      },
+    ],
+    glslFunction: 'vec3 vec3 = vec3(vec2, {z});',
+  },
+
   length: {
     id: 'length',
     label: 'Length',
