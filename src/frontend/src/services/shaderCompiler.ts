@@ -1,4 +1,4 @@
-import { CompileRequest, CompileResponse, CompiledShader } from '../types/shaderTypes'
+import { CompileRequest, CompileResponse } from '../types/shaderTypes'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
