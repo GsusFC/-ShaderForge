@@ -199,24 +199,24 @@ float simplex(vec2 p) {
     
     def _validate_graph(self, graph: Dict[str, Any]) -> bool:
         """Valida la estructura del grafo"""
-        if not graph.get('nodes') or not isinstance(graph['nodes'], list):
+        if 'nodes' not in graph or not isinstance(graph['nodes'], list):
             self.errors.append("Invalid nodes list")
             return False
-        
-        if not graph.get('edges') or not isinstance(graph['edges'], list):
-            self.errors.append("Invalid edges list")
-            return False
-        
-        # Verificar que hay al menos un nodo output
+
+        # Verificar que hay al menos un nodo output (antes de validar edges)
         has_output = any(
             n.get('data', {}).get('type') == 'fragment_output'
             for n in graph['nodes']
         )
-        
+
         if not has_output:
             self.errors.append("No fragment output node found")
             return False
-        
+
+        if 'edges' not in graph or not isinstance(graph['edges'], list):
+            self.errors.append("Invalid edges list")
+            return False
+
         return True
     
     def _topological_sort(self, graph: Dict[str, Any]) -> Optional[List[Dict]]:
@@ -281,37 +281,67 @@ float simplex(vec2 p) {
     def _analyze_input_types(self, graph: Dict[str, Any], sorted_nodes: List[Dict]):
         """Analiza los tipos de entrada/salida de los nodos"""
         edges = graph.get('edges', [])
-        
+
         # Crear mapa de conexiones
         output_connections = {}  # source_node -> List[(target_node, target_handle)]
         input_connections = {}   # target_node -> {target_handle: (source_node, source_handle)}
-        
+
         for edge in edges:
             source = edge.get('source')
             target = edge.get('target')
-            
+
             if source and target:
                 if source not in output_connections:
                     output_connections[source] = []
                 output_connections[source].append((target, edge.get('targetHandle', 'input')))
-                
+
                 if target not in input_connections:
                     input_connections[target] = {}
                 input_connections[target][edge.get('targetHandle', 'input')] = (source, edge.get('sourceHandle', 'output'))
-        
-        # Para cada nodo, registrar tipos de entrada
+
+        # Primero: determinar tipos de output de cada nodo en orden topológico
         for node in sorted_nodes:
             node_id = node['id']
             node_type = node['data'].get('type', '')
-            
-            self.node_input_types[node_id] = []
-            
+
             if node_type in self.NODE_FUNCTIONS:
                 node_def = self.NODE_FUNCTIONS[node_type]
-                
+                safe_node_id = node_id.replace('-', '_')
+                output_var = f"v_{safe_node_id}"
+                output_type = node_def.get('output_type', 'float')
+
+                # Si el tipo es 'mixed', necesitamos inferir de los inputs
+                if output_type == 'mixed':
+                    # Buscar el tipo del primer input conectado
+                    for i in range(node_def.get('inputs', 0)):
+                        handle = f'input{i}' if i > 0 else 'input'
+
+                        if node_id in input_connections and handle in input_connections[node_id]:
+                            source_node_id, _ = input_connections[node_id][handle]
+                            if source_node_id in self.node_outputs:
+                                _, input_type = self.node_outputs[source_node_id]
+                                output_type = input_type
+                                break
+
+                    # Si no pudimos inferir, usar float por defecto
+                    if output_type == 'mixed':
+                        output_type = 'float'
+
+                self.node_outputs[node_id] = (output_var, output_type)
+
+        # Segundo: registrar tipos de entrada para cada nodo
+        for node in sorted_nodes:
+            node_id = node['id']
+            node_type = node['data'].get('type', '')
+
+            self.node_input_types[node_id] = []
+
+            if node_type in self.NODE_FUNCTIONS:
+                node_def = self.NODE_FUNCTIONS[node_type]
+
                 for i in range(node_def.get('inputs', 0)):
-                    handle = f'input{i+1}' if i > 0 else 'input'
-                    
+                    handle = f'input{i}' if i > 0 else 'input'
+
                     # Buscar tipo del nodo conectado
                     if node_id in input_connections and handle in input_connections[node_id]:
                         source_node_id, _ = input_connections[node_id][handle]
@@ -372,15 +402,15 @@ float simplex(vec2 p) {
             for func in node_def.get('functions', []):
                 self.required_functions.add(func)
             
-            # Generar variable de salida (sanitizar node_id: reemplazar guiones con guiones bajos)
-            safe_node_id = node_id.replace('-', '_')
-            output_var = f"v_{safe_node_id}"
-            output_type = node_def.get('output_type', 'float')
-            
-            if output_type == 'mixed' and self.node_input_types.get(node_id):
-                output_type = self.node_input_types[node_id][0]
-            
-            self.node_outputs[node_id] = (output_var, output_type)
+            # Obtener variable y tipo de salida (ya calculado en _analyze_input_types)
+            if node_id in self.node_outputs:
+                output_var, output_type = self.node_outputs[node_id]
+            else:
+                # Fallback si no se calculó antes
+                safe_node_id = node_id.replace('-', '_')
+                output_var = f"v_{safe_node_id}"
+                output_type = node_def.get('output_type', 'float')
+                self.node_outputs[node_id] = (output_var, output_type)
             
             # Generar cรณdigo del nodo
             glsl_template = node_def['glsl']
@@ -394,7 +424,7 @@ float simplex(vec2 p) {
                 handle = f'input{i}' if i > 0 else 'input'
                 # Placeholders siempre numerados: {input1}, {input2}, etc.
                 placeholder = f'{{input{input_num}}}'
-                
+
                 # Buscar variable de entrada desde el grafo
                 if node_id in input_connections and handle in input_connections[node_id]:
                     source_node_id, source_handle = input_connections[node_id][handle]
