@@ -3,7 +3,7 @@
 import { MATH_NODES, VECTOR_NODES, CONVERSION_NODES, CUSTOM_NODES } from './nodeLibrary'
 
 export type NodeCategory = 'input' | 'operation' | 'output' | 'color' | 'vector' | 'texture' | 'utility'
-export type ParameterType = 'float' | 'int' | 'vec2' | 'vec3' | 'vec4' | 'color' | 'select'
+export type ParameterType = 'float' | 'int' | 'vec2' | 'vec3' | 'vec4' | 'color' | 'select' | 'text'
 
 export interface NodeParameter {
   name: string
