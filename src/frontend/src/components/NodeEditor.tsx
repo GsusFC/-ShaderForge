@@ -8,7 +8,6 @@ import ReactFlow, {
   useEdgesState,
   Background,
   Controls,
-  MiniMap,
   Panel,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
