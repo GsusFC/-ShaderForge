@@ -277,43 +277,61 @@ export default function NodeEditor() {
           </div>
         </div>
 
-        {/* Editor and Preview Container */}
-        <div className="node-editor-main">
-          {/* Editor Canvas */}
-          <div className={`canvas-area transition-all duration-300`} style={{ width: showPreview ? '50%' : 'calc(100% - 400px)' }}>
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnect}
-              nodeTypes={nodeTypes}
-              fitView
-            >
-              <Background color="#2a2a2a" gap={16} />
-              <Controls />
-              <MiniMap />
+        {/* Main Layout: Top (Canvas + Preview) | Bottom (Code) */}
+        <div className="node-editor-main" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)' }}>
 
-              <Panel position="top-left" className="info-panel">
-                <div className="info-panel-title">ShaderForge Node Editor</div>
-                <p className="info-panel-hint">
-                  Arrastra desde el panel izquierdo o haz click en "Nodos"
-                </p>
-              </Panel>
-            </ReactFlow>
+          {/* Top Section: Canvas + Preview */}
+          <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+
+            {/* Editor Canvas */}
+            <div className="canvas-area" style={{ width: showPreview ? '50%' : '100%', position: 'relative' }}>
+              <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onConnect={onConnect}
+                nodeTypes={nodeTypes}
+                fitView
+              >
+                <Background color="#2a2a2a" gap={16} />
+                <Controls />
+
+                <Panel position="top-left" className="info-panel">
+                  <div className="info-panel-title">ShaderForge Node Editor</div>
+                  <p className="info-panel-hint">
+                    Arrastra desde el panel izquierdo o haz click en "Nodos"
+                  </p>
+                </Panel>
+              </ReactFlow>
+            </div>
+
+            {/* Shader Preview Panel */}
+            {showPreview && (
+              <div className="preview-panel" style={{ width: '50%', borderLeft: '1px solid #333' }}>
+                <ShaderPreview shaderCode={compiledCode} uniforms={compiledUniforms} />
+              </div>
+            )}
           </div>
 
-          {/* Shader Preview Panel */}
-          {showPreview && (
-            <div className="preview-panel">
-              <ShaderPreview shaderCode={compiledCode} uniforms={compiledUniforms} />
-            </div>
-          )}
-
-          {/* Compiled Code Panel - Always show on the right */}
-          <div className="code-panel" style={{ width: '400px', overflowY: 'auto', borderLeft: '1px solid #333' }}>
-            <div className="code-panel-header">
-              <h3>📋 Código GLSL</h3>
+          {/* Bottom Section: Code Panel (Horizontal) */}
+          <div style={{
+            height: '300px',
+            borderTop: '2px solid #444',
+            display: 'flex',
+            flexDirection: 'column',
+            backgroundColor: '#1a1a1a',
+            overflow: 'hidden'
+          }}>
+            <div className="code-panel-header" style={{
+              padding: '10px 16px',
+              borderBottom: '1px solid #333',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              backgroundColor: '#1e1e1e'
+            }}>
+              <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600 }}>📋 Código GLSL</h3>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 {/* Validation indicator */}
                 {showValidation && (
@@ -361,7 +379,7 @@ export default function NodeEditor() {
                 padding: '12px',
                 backgroundColor: '#1a1a1a',
                 borderBottom: '1px solid #3a3a3a',
-                maxHeight: '150px',
+                maxHeight: '100px',
                 overflowY: 'auto'
               }}>
                 {validationErrors.length > 0 && (
@@ -420,11 +438,19 @@ export default function NodeEditor() {
               </div>
             )}
 
-            <div className="code-block">
+            {/* Code Block */}
+            <div className="code-block" style={{
+              flex: 1,
+              overflowY: 'auto',
+              padding: '12px',
+              backgroundColor: '#0d0d0d'
+            }}>
               {compiledCode ? (
-                <pre style={{ fontSize: '11px', margin: 0 }}>{compiledCode}</pre>
+                <pre style={{ fontSize: '11px', margin: 0, whiteSpace: 'pre', overflowX: 'auto' }}>{compiledCode}</pre>
               ) : (
-                <p style={{ color: '#666', padding: '20px' }}>Compila un shader para ver el código aquí</p>
+                <p style={{ color: '#666', padding: '20px', textAlign: 'center' }}>
+                  Compila un shader para ver el código aquí
+                </p>
               )}
             </div>
           </div>
