@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: shaderforge-backend
+    runtime: python
+    region: oregon
+    plan: free
+    branch: claude/validate-qie-011CUoTjNiHiUqfPJXN1x7bc
+    buildCommand: pip install -r requirements-prod.txt
+    startCommand: cd src/backend && uvicorn main_prod:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: CORS_ORIGINS
+        value: https://shaderforge.netlify.app,http://localhost:5173
+      - key: PYTHON_VERSION
+        value: 3.11
