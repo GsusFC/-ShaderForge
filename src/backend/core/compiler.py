@@ -100,6 +100,12 @@ class GLSLCompiler:
             'inputs': 0,
             'outputs': 1,
             'output_type': 'vec3'
+        },
+        'vec3_construct': {
+            'glsl': 'vec3 {output} = vec3({input1}, {input2}, {input3});',
+            'inputs': 3,
+            'outputs': 1,
+            'output_type': 'vec3'
         }
     }
     
