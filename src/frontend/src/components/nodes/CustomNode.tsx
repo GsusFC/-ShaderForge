@@ -81,19 +81,35 @@ export default function CustomNode({ id, data, selected, isConnectable }: Custom
   }
 
   const definition = NODE_DEFINITIONS[type as keyof typeof NODE_DEFINITIONS]
+  const numInputs = definition?.inputs?.length || 0
+  const numOutputs = definition?.outputs?.length || 0
 
   return (
     <div
       className={`custom-node ${category} ${selected ? 'selected' : ''}`}
       style={{ borderColor: color } as React.CSSProperties}
     >
-      {/* Input Handle - siempre visible para recibir conexiones */}
-      <Handle
-        type="target"
-        position={Position.Left}
-        isConnectable={isConnectable ?? true}
-        style={{ background: color }}
-      />
+      {/* Input Handles - múltiples si es necesario */}
+      {numInputs > 0 && definition?.inputs.map((input, index) => {
+        const handleId = index === 0 ? 'input' : `input${index}`
+        const verticalOffset = numInputs > 1 ? (index / (numInputs - 1)) * 100 : 50
+
+        return (
+          <Handle
+            key={handleId}
+            type="target"
+            position={Position.Left}
+            id={handleId}
+            isConnectable={isConnectable ?? true}
+            style={{
+              background: color,
+              top: `${verticalOffset}%`,
+              transform: 'translateY(-50%)'
+            }}
+            title={input.name}
+          />
+        )
+      })}
 
       {/* Node Content */}
       <div className="node-content">
@@ -118,13 +134,27 @@ export default function CustomNode({ id, data, selected, isConnectable }: Custom
         )}
       </div>
 
-      {/* Output Handle - siempre visible para enviar conexiones */}
-      <Handle
-        type="source"
-        position={Position.Right}
-        isConnectable={isConnectable ?? true}
-        style={{ background: color }}
-      />
+      {/* Output Handles - múltiples si es necesario */}
+      {numOutputs > 0 && definition?.outputs.map((output, index) => {
+        const handleId = index === 0 ? 'output' : `output${index}`
+        const verticalOffset = numOutputs > 1 ? (index / (numOutputs - 1)) * 100 : 50
+
+        return (
+          <Handle
+            key={handleId}
+            type="source"
+            position={Position.Right}
+            id={handleId}
+            isConnectable={isConnectable ?? true}
+            style={{
+              background: color,
+              top: `${verticalOffset}%`,
+              transform: 'translateY(-50%)'
+            }}
+            title={output.name}
+          />
+        )
+      })}
 
       {/* Node Actions */}
       <div className="node-actions">
