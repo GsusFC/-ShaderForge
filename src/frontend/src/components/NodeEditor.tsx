@@ -11,10 +11,11 @@ import ReactFlow, {
   Panel,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
-import { ChevronDown, Trash2, Code2, Eye, EyeOff, Lightbulb } from 'lucide-react'
+import { ChevronDown, Trash2, Code2, Eye, EyeOff, Lightbulb, FileCode } from 'lucide-react'
 import CustomNode from './nodes/CustomNode'
 import NodePalette from './NodePalette'
 import ShaderPreview from './ShaderPreview'
+import ImportGLSL from './ImportGLSL'
 import { NODE_DEFINITIONS } from '../types/nodes'
 import { useShaderStore } from '../stores/shaderStore'
 import '../styles/NodeEditor.css'
@@ -36,6 +37,7 @@ export default function NodeEditor() {
   const [validationErrors, setValidationErrors] = useState<string[]>([])
   const [validationWarnings, setValidationWarnings] = useState<string[]>([])
   const [showValidation, setShowValidation] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
 
   const { currentShaderCode, currentShaderName, currentShaderUniforms, isFromSearch, clearShader } = useShaderStore()
 
@@ -218,6 +220,12 @@ export default function NodeEditor() {
     setEdges(exampleEdges)
   }, [setNodes, setEdges])
 
+  const handleImportGLSL = useCallback((importedNodes: any[], importedEdges: any[]) => {
+    // Replace current graph with imported nodes
+    setNodes(importedNodes)
+    setEdges(importedEdges)
+  }, [setNodes, setEdges])
+
   const handleCompile = useCallback(async () => {
     if (isCompilingRef.current || nodes.length === 0) return
 
@@ -289,6 +297,14 @@ export default function NodeEditor() {
             >
               <Lightbulb size={18} />
               Ejemplo
+            </button>
+            <button
+              onClick={() => setShowImportModal(true)}
+              className="btn btn-primary"
+              title="Importar GLSL con IA"
+            >
+              <FileCode size={18} />
+              Importar
             </button>
             <div className="stats-badge">
               Nodos: <span>{nodes.length}</span>
@@ -538,6 +554,13 @@ export default function NodeEditor() {
           </div>
         </div>
       </div>
+
+      {/* Import GLSL Modal */}
+      <ImportGLSL
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImport={handleImportGLSL}
+      />
     </div>
   )
 }

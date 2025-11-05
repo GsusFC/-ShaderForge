@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 
 from api.nodes import router as nodes_router
+from api.glsl_import import router as glsl_import_router
 
 # Cargar variables de entorno
 load_dotenv()
@@ -26,8 +27,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Incluir solo el router de nodos (core functionality)
+# Incluir routers
 app.include_router(nodes_router)
+app.include_router(glsl_import_router)
 
 # Rutas básicas
 @app.get("/")
