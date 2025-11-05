@@ -339,11 +339,19 @@ float simplex(vec2 p) {
             if node_type in self.NODE_FUNCTIONS:
                 node_def = self.NODE_FUNCTIONS[node_type]
 
+                # Si el nodo tiene infer_type, todos sus inputs deben tener el mismo tipo que su output
+                inferred_type = None
+                if node_def.get('infer_type') and node_id in self.node_outputs:
+                    _, inferred_type = self.node_outputs[node_id]
+
                 for i in range(node_def.get('inputs', 0)):
                     handle = f'input{i}' if i > 0 else 'input'
 
-                    # Buscar tipo del nodo conectado
-                    if node_id in input_connections and handle in input_connections[node_id]:
+                    # Si el nodo infiere tipos, usar el tipo inferido para todos los inputs
+                    if inferred_type:
+                        self.node_input_types[node_id].append(inferred_type)
+                    # Si no, buscar tipo del nodo conectado
+                    elif node_id in input_connections and handle in input_connections[node_id]:
                         source_node_id, _ = input_connections[node_id][handle]
                         if source_node_id in self.node_outputs:
                             _, input_type = self.node_outputs[source_node_id]
@@ -353,6 +361,18 @@ float simplex(vec2 p) {
                     else:
                         self.node_input_types[node_id].append('float')
     
+    def _get_default_value_for_type(self, glsl_type: str) -> str:
+        """Retorna el valor default apropiado para un tipo GLSL"""
+        type_defaults = {
+            'float': '0.0',
+            'vec2': 'vec2(0.0)',
+            'vec3': 'vec3(0.0)',
+            'vec4': 'vec4(0.0)',
+            'int': '0',
+            'bool': 'false',
+        }
+        return type_defaults.get(glsl_type, '0.0')
+
     def _generate_glsl(self, sorted_nodes: List[Dict], graph: Dict[str, Any]) -> str:
         """Genera cรณdigo GLSL desde nodos ordenados"""
         edges = graph.get('edges', [])
@@ -425,6 +445,11 @@ float simplex(vec2 p) {
                 # Placeholders siempre numerados: {input1}, {input2}, etc.
                 placeholder = f'{{input{input_num}}}'
 
+                # Determinar tipo esperado para este input
+                expected_type = 'float'
+                if node_id in self.node_input_types and i < len(self.node_input_types[node_id]):
+                    expected_type = self.node_input_types[node_id][i]
+
                 # Buscar variable de entrada desde el grafo
                 if node_id in input_connections and handle in input_connections[node_id]:
                     source_node_id, source_handle = input_connections[node_id][handle]
@@ -432,7 +457,9 @@ float simplex(vec2 p) {
                         input_var, _ = self.node_outputs[source_node_id]
                         glsl_line = glsl_line.replace(placeholder, input_var)
                     else:
-                        glsl_line = glsl_line.replace(placeholder, "0.0")
+                        # Usar valor default apropiado para el tipo
+                        default_value = self._get_default_value_for_type(expected_type)
+                        glsl_line = glsl_line.replace(placeholder, default_value)
                 else:
                     # Usar parámetro del nodo si existe
                     params = node['data'].get('parameters', {})
@@ -440,7 +467,9 @@ float simplex(vec2 p) {
                     if param_key in params:
                         glsl_line = glsl_line.replace(placeholder, str(params[param_key]))
                     else:
-                        glsl_line = glsl_line.replace(placeholder, "0.0")
+                        # Usar valor default apropiado para el tipo
+                        default_value = self._get_default_value_for_type(expected_type)
+                        glsl_line = glsl_line.replace(placeholder, default_value)
             
             # Reemplazar todos los parรกmetros en el template
             node_params = node['data'].get('parameters', {})
@@ -465,6 +494,38 @@ float simplex(vec2 p) {
                 glsl_line = glsl_line.replace('{y}', str(y))
                 glsl_line = glsl_line.replace('{z}', str(z))
             
+
+            # Fix especial para fragment_output: convertir input a vec4 correctamente
+            if node_type == 'fragment_output':
+                # Determinar el tipo del input conectado
+                input_type = 'float'
+                if node_id in input_connections and 'input' in input_connections[node_id]:
+                    source_node_id, _ = input_connections[node_id]['input']
+                    if source_node_id in self.node_outputs:
+                        _, input_type = self.node_outputs[source_node_id]
+
+                # Buscar la variable de input en la línea generada
+                # El template es: fragColor = vec4({input1}, 1.0);
+                # Necesitamos extraer el nombre de la variable
+                import re as regex_module
+                match = regex_module.search(r'fragColor = vec4\((.+?), 1\.0\);', glsl_line)
+                if match:
+                    input_var = match.group(1)
+
+                    # Generar conversión correcta según tipo
+                    if input_type == 'float':
+                        # float → vec4(v, v, v, 1.0)
+                        glsl_line = f"fragColor = vec4(vec3({input_var}), 1.0);"
+                    elif input_type == 'vec2':
+                        # vec2 → vec4(v.x, v.y, 0.0, 1.0)
+                        glsl_line = f"fragColor = vec4({input_var}, 0.0, 1.0);"
+                    elif input_type == 'vec3':
+                        # vec3 → vec4(v, 1.0) ✓ Ya funciona
+                        glsl_line = f"fragColor = vec4({input_var}, 1.0);"
+                    elif input_type == 'vec4':
+                        # vec4 → ya es vec4
+                        glsl_line = f"fragColor = {input_var};"
+
             code_lines.append(glsl_line)
         
         # Armar cรณdigo final

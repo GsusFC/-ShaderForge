@@ -102,7 +102,8 @@ class TestGLSLCompiler:
         result = self.compiler.compile(graph)
         assert result.error is None
         assert "vec2 v_uv = fragCoord / iResolution.xy;" in result.code
-        assert "fragColor = vec4(v_uv, 1.0);" in result.code
+        # vec2 se convierte a vec4 correctamente: vec4(vec2, 0.0, 1.0)
+        assert "fragColor = vec4(v_uv, 0.0, 1.0);" in result.code
         assert any(u["name"] == "iResolution" for u in result.uniforms)
 
     def test_time_input_node(self):
@@ -263,7 +264,8 @@ class TestGLSLCompiler:
         assert result.error is None
         assert "vec2 v_uv" in result.code
         assert "float v_noise = perlin(v_uv)" in result.code
-        assert "fragColor = vec4(v_noise, 1.0)" in result.code
+        # float se convierte a vec4 correctamente: vec4(vec3(float), 1.0)
+        assert "fragColor = vec4(vec3(v_noise), 1.0)" in result.code
 
     def test_multiple_inputs_to_output(self):
         """Test múltiples branches confluyendo en output"""
