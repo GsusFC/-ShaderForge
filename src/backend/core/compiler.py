@@ -340,6 +340,15 @@ class GLSLCompiler:
             'outputs': 1,
             'infer_type': True,
             'output_type': 'mixed'
+        },
+
+        # ===== CUSTOM CODE =====
+        'custom_code': {
+            'glsl': '{code}',
+            'inputs': 0,  # Variable, defined by user
+            'outputs': 1,
+            'output_type': 'float',  # Variable, defined by user
+            'custom': True
         }
     }
     

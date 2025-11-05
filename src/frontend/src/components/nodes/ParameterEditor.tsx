@@ -107,6 +107,31 @@ export default function ParameterEditor({ parameter, value, onChange }: Paramete
         </div>
       )
 
+    case 'text':
+      return (
+        <div className="parameter-editor">
+          <label className="param-label">{parameter.label}</label>
+          <textarea
+            value={value ?? parameter.default}
+            onChange={(e) => handleChange(e.target.value)}
+            className="param-textarea"
+            rows={4}
+            placeholder={parameter.description}
+            style={{
+              width: '100%',
+              fontFamily: 'monospace',
+              fontSize: '11px',
+              padding: '4px',
+              resize: 'vertical',
+              backgroundColor: '#1a1a1a',
+              color: '#e0e0e0',
+              border: '1px solid #444',
+              borderRadius: '3px',
+            }}
+          />
+        </div>
+      )
+
     default:
       return null
   }

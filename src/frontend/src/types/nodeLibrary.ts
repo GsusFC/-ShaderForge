@@ -482,3 +482,48 @@ export const CONVERSION_NODES: Record<string, NodeDefinition> = {
     glslFunction: 'float component = vector.{component};',
   },
 }
+
+export const CUSTOM_NODES: Record<string, NodeDefinition> = {
+  custom_code: {
+    id: 'custom_code',
+    label: 'Custom Code',
+    description: 'Escribe GLSL personalizado',
+    category: 'utility',
+    color: '#f97316',
+    inputs: [],  // Dinámico
+    outputs: [{ name: 'output', type: 'float' }],
+    parameters: [
+      {
+        name: 'code',
+        label: 'GLSL Code',
+        type: 'text',
+        default: 'float output = input1 * 2.0;',
+        description: 'Código GLSL personalizado. Usa {output}, {input1}, {input2}, etc.',
+      },
+      {
+        name: 'num_inputs',
+        label: 'Num Inputs',
+        type: 'int',
+        default: 1,
+        min: 0,
+        max: 8,
+        step: 1,
+        description: 'Número de inputs',
+      },
+      {
+        name: 'output_type',
+        label: 'Output Type',
+        type: 'select',
+        default: 'float',
+        options: [
+          { label: 'float', value: 'float' },
+          { label: 'vec2', value: 'vec2' },
+          { label: 'vec3', value: 'vec3' },
+          { label: 'vec4', value: 'vec4' },
+        ],
+        description: 'Tipo de salida',
+      },
+    ],
+    glslFunction: '{code}',
+  },
+}

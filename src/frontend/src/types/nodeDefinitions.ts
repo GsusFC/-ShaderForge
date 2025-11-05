@@ -1,6 +1,6 @@
 // Definiciones mejoradas de nodos con parámetros editables
 
-import { MATH_NODES, VECTOR_NODES, CONVERSION_NODES } from './nodeLibrary'
+import { MATH_NODES, VECTOR_NODES, CONVERSION_NODES, CUSTOM_NODES } from './nodeLibrary'
 
 export type NodeCategory = 'input' | 'operation' | 'output' | 'color' | 'vector' | 'texture' | 'utility'
 export type ParameterType = 'float' | 'int' | 'vec2' | 'vec3' | 'vec4' | 'color' | 'select'
@@ -496,6 +496,7 @@ export const NODE_DEFINITIONS: Record<string, NodeDefinition> = {
   ...MATH_NODES,
   ...VECTOR_NODES,
   ...CONVERSION_NODES,
+  ...CUSTOM_NODES,
 }
 
 // Tipos de datos para validación
