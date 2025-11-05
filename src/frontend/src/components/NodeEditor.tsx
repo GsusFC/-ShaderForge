@@ -153,32 +153,34 @@ export default function NodeEditor() {
   }, [setNodes, setEdges])
 
   const handleLoadExample = useCallback(() => {
-    // Create a simple example shader: UV → Add → Fragment Output
+    // Create example shader: UV → Perlin Noise → Fragment Output
     const exampleNodes: Node[] = [
       {
         id: 'example-uv',
         type: 'shaderNode',
         position: { x: 100, y: 200 },
         data: {
-          label: 'UV Input',
-          description: 'Coordenadas UV del vértice',
+          label: 'UV',
+          description: 'Coordenadas UV normalizadas de pantalla',
           category: 'input',
           type: 'uv_input',
-          color: '#4ade80',
+          color: '#3b82f6',
           parameters: {},
         },
       },
       {
-        id: 'example-add',
+        id: 'example-noise',
         type: 'shaderNode',
         position: { x: 350, y: 200 },
         data: {
-          label: 'Add',
-          description: 'Suma dos valores',
-          category: 'math',
-          type: 'add',
-          color: '#fbbf24',
-          parameters: {},
+          label: 'Perlin Noise',
+          description: 'Ruido de Perlin 2D',
+          category: 'utility',
+          type: 'perlin_noise',
+          color: '#ec4899',
+          parameters: {
+            scale: 5.0,
+          },
         },
       },
       {
@@ -187,10 +189,10 @@ export default function NodeEditor() {
         position: { x: 600, y: 200 },
         data: {
           label: 'Fragment Output',
-          description: 'Salida del fragment shader',
+          description: 'Color final del shader',
           category: 'output',
           type: 'fragment_output',
-          color: '#f87171',
+          color: '#00ff88',
           parameters: {},
         },
       },
@@ -198,15 +200,15 @@ export default function NodeEditor() {
 
     const exampleEdges: Edge[] = [
       {
-        id: 'e-uv-add',
+        id: 'e-uv-noise',
         source: 'example-uv',
-        target: 'example-add',
+        target: 'example-noise',
         sourceHandle: 'output',
         targetHandle: 'input',
       },
       {
-        id: 'e-add-output',
-        source: 'example-add',
+        id: 'e-noise-output',
+        source: 'example-noise',
         target: 'example-output',
         sourceHandle: 'output',
         targetHandle: 'input',
