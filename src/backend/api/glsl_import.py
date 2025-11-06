@@ -119,14 +119,36 @@ Devuelve SOLO el JSON, sin markdown ni explicaciones."""
         # Extraer respuesta
         response_text = message.content[0].text
 
-        # Limpiar markdown si está presente
-        # Intentar extraer JSON del markdown
-        json_match = re.search(r'```(?:json)?\s*(\{.*\})\s*```', response_text, re.DOTALL)
-        if json_match:
-            response_text = json_match.group(1)
+        # Log de la respuesta completa para debugging
+        print(f"[DEBUG] Respuesta de Claude (primeros 500 chars): {response_text[:500]}")
 
-        # Parsear JSON
-        result = json.loads(response_text)
+        # Limpiar y extraer JSON de múltiples formatos posibles
+        cleaned_text = response_text.strip()
+
+        # Intentar extraer JSON de bloques markdown (múltiples patrones)
+        json_patterns = [
+            r'```json\s*(\{[\s\S]*?\})\s*```',  # ```json { ... } ```
+            r'```\s*(\{[\s\S]*?\})\s*```',       # ``` { ... } ```
+            r'(\{[\s\S]*\})'                      # { ... } sin markdown
+        ]
+
+        parsed_json = None
+        for pattern in json_patterns:
+            json_match = re.search(pattern, cleaned_text)
+            if json_match:
+                try:
+                    parsed_json = json.loads(json_match.group(1))
+                    print(f"[DEBUG] JSON parseado exitosamente con patrón: {pattern}")
+                    break
+                except json.JSONDecodeError:
+                    continue
+
+        if not parsed_json:
+            # Si no se pudo parsear, mostrar qué se recibió
+            print(f"[ERROR] No se pudo parsear JSON. Respuesta completa: {response_text}")
+            raise ValueError(f"No se pudo extraer JSON válido de la respuesta. Respuesta recibida: {response_text[:200]}...")
+
+        result = parsed_json
 
         return GLSLImportResponse(
             nodes=result.get("nodes", []),
@@ -135,14 +157,24 @@ Devuelve SOLO el JSON, sin markdown ni explicaciones."""
         )
 
     except json.JSONDecodeError as e:
+        print(f"[ERROR] JSONDecodeError: {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Error parseando respuesta de IA: {str(e)}"
+            detail=f"Error parseando JSON de respuesta de IA: {str(e)}. Verifica los logs del servidor para más detalles."
+        )
+    except ValueError as e:
+        print(f"[ERROR] ValueError: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
         )
     except Exception as e:
+        print(f"[ERROR] Exception no esperada: {type(e).__name__}: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=500,
-            detail=f"Error procesando GLSL: {str(e)}"
+            detail=f"Error procesando GLSL: {type(e).__name__}: {str(e)}"
         )
 
 @router.get("/health")
