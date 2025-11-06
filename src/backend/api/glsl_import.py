@@ -47,33 +47,77 @@ async def import_glsl_to_nodes(request: GLSLImportRequest):
 
         # Prompt para Claude
         system_prompt = """Eres un experto en GLSL y node-based shader editors.
-Tu tarea es analizar código GLSL y convertirlo en un grafo de nodos.
+Tu tarea es analizar código GLSL y convertirlo en un GRAFO COMPLETO Y CONECTADO de nodos.
 
-Nodos disponibles:
-- uv_input, time_input, mouse_input, float_constant
-- add, subtract, multiply, divide, pow, sqrt, abs, sin, cos, tan
-- floor, ceil, fract, mod, min, max, clamp, smoothstep, step
+IMPORTANTE: Este es un GRAFO DE FLUJO DE DATOS. TODOS los nodos deben estar conectados formando un flujo desde inputs hasta fragment_output.
+
+## Nodos disponibles:
+
+INPUTS:
+- uv_input: Coordenadas UV (vec2)
+- time_input: Tiempo (iTime) (float)
+- mouse_input: Mouse (vec2)
+- resolution_input: Resolución (iResolution) (vec3)
+- float_constant: Valor constante (configurable en parameters.value)
+
+OPERACIONES MATEMÁTICAS:
+- add, subtract, multiply, divide: Operaciones binarias
+- pow, sqrt, abs, sin, cos, tan, floor, ceil, fract
+- mod, min, max, clamp, smoothstep, step
 - dot, cross, normalize, length, distance, reflect
+
+CONSTRUCTORES:
 - vec2_construct, vec3_construct, vec4_construct
 - vec2_to_vec3, float_to_vec2, float_to_vec3, float_to_vec4
-- split_vec2, split_vec3, split_vec4
-- perlin_noise, simplex_noise
-- sdf_sphere, sdf_box, sdf_torus
-- fragment_output
-- custom_code (para funciones personalizadas)
 
-Debes devolver un JSON con:
+DESTRUCTORES:
+- split_vec2: Extrae x, y de vec2
+- split_vec3: Extrae x, y, z de vec3
+- split_vec4: Extrae x, y, z, w de vec4
+
+OUTPUT:
+- fragment_output: Output final (fragColor)
+
+CUSTOM:
+- custom_code: Para funciones complejas (especifica code en parameters)
+
+## Formato JSON requerido:
+
 {
   "nodes": [
     {
       "id": "node-1",
       "type": "shaderNode",
-      "position": {"x": 100, "y": 200},
+      "position": {"x": 100, "y": 100},
       "data": {
-        "label": "UV",
-        "type": "uv_input",
+        "label": "Time",
+        "type": "time_input",
         "category": "input",
         "color": "#3b82f6",
+        "parameters": {}
+      }
+    },
+    {
+      "id": "node-2",
+      "type": "shaderNode",
+      "position": {"x": 300, "y": 100},
+      "data": {
+        "label": "Sin",
+        "type": "sin",
+        "category": "math",
+        "color": "#10b981",
+        "parameters": {}
+      }
+    },
+    {
+      "id": "node-3",
+      "type": "shaderNode",
+      "position": {"x": 500, "y": 100},
+      "data": {
+        "label": "Output",
+        "type": "fragment_output",
+        "category": "output",
+        "color": "#ef4444",
         "parameters": {}
       }
     }
@@ -85,17 +129,48 @@ Debes devolver un JSON con:
       "target": "node-2",
       "sourceHandle": "output",
       "targetHandle": "input"
+    },
+    {
+      "id": "e2",
+      "source": "node-2",
+      "target": "node-3",
+      "sourceHandle": "output",
+      "targetHandle": "color"
     }
   ],
-  "analysis": "Descripción de lo que hace el shader"
+  "analysis": "Calcula sin(time) y lo envía al output"
 }
 
-Reglas:
-1. Usa custom_code SOLO para funciones complejas que no tienen nodo equivalente
-2. Posiciona nodos de izquierda a derecha (inputs → operations → output)
-3. Incrementa Y para evitar solapamientos
-4. Usa nodos existentes siempre que sea posible
-5. Para funciones custom como rgb() o sdCircle(), usa custom_code con el código
+## REGLAS CRÍTICAS:
+
+1. **TODOS LOS NODOS DEBEN ESTAR CONECTADOS**: No dejes nodos sueltos
+2. **DEBE HABER UN fragment_output**: Es el nodo final obligatorio
+3. **FLUJO DE DATOS**: Sigue el orden de evaluación del shader original
+4. **IDs ÚNICOS**: Cada nodo necesita un ID único (node-1, node-2, etc)
+5. **EDGES VÁLIDOS**: Cada edge debe conectar nodos que existen
+6. **HANDLES CORRECTOS**:
+   - Nodos matemáticos usan "input", "input2" para entradas
+   - Todos los nodos tienen "output" para salida
+   - fragment_output usa "color" como input
+7. **POSICIONAMIENTO**: X incrementa de izquierda a derecha (cada 200px), Y incrementa para evitar solapamientos
+8. **PARAMETERS**: Para float_constant usa {"value": 1.0}, para custom_code usa {"code": "...glsl..."}
+
+## Ejemplo completo (UV con color):
+
+{
+  "nodes": [
+    {"id": "n1", "type": "shaderNode", "position": {"x": 50, "y": 100}, "data": {"label": "UV", "type": "uv_input", "category": "input", "color": "#3b82f6", "parameters": {}}},
+    {"id": "n2", "type": "shaderNode", "position": {"x": 250, "y": 100}, "data": {"label": "To Vec3", "type": "vec2_to_vec3", "category": "conversion", "color": "#8b5cf6", "parameters": {}}},
+    {"id": "n3", "type": "shaderNode", "position": {"x": 450, "y": 100}, "data": {"label": "To Vec4", "type": "float_to_vec4", "category": "conversion", "color": "#8b5cf6", "parameters": {}}},
+    {"id": "n4", "type": "shaderNode", "position": {"x": 650, "y": 100}, "data": {"label": "Output", "type": "fragment_output", "category": "output", "color": "#ef4444", "parameters": {}}}
+  ],
+  "edges": [
+    {"id": "e1", "source": "n1", "target": "n2", "sourceHandle": "output", "targetHandle": "input"},
+    {"id": "e2", "source": "n2", "target": "n3", "sourceHandle": "output", "targetHandle": "input"},
+    {"id": "e3", "source": "n3", "target": "n4", "sourceHandle": "output", "targetHandle": "color"}
+  ],
+  "analysis": "Convierte UV (vec2) a vec4 y lo envía al output"
+}
 """
 
         user_prompt = f"""Analiza este código GLSL y conviértelo en nodos:
@@ -170,9 +245,58 @@ Devuelve SOLO el JSON, sin markdown ni explicaciones."""
                 f"JSON (primeros 500 chars): {json_text[:500]}"
             )
 
+        # Validar el grafo generado
+        nodes = result.get("nodes", [])
+        edges = result.get("edges", [])
+
+        print(f"[DEBUG] Nodos generados: {len(nodes)}")
+        print(f"[DEBUG] Edges generados: {len(edges)}")
+
+        # Validación 1: Debe haber nodos
+        if not nodes:
+            raise ValueError("Claude no generó ningún nodo. El shader podría ser muy complejo.")
+
+        # Validación 2: Debe haber un fragment_output
+        has_output = any(node.get("data", {}).get("type") == "fragment_output" for node in nodes)
+        if not has_output:
+            print(f"[WARNING] No se encontró fragment_output en los nodos generados")
+
+        # Validación 3: Verificar que los edges tengan IDs válidos
+        node_ids = {node.get("id") for node in nodes}
+        invalid_edges = []
+        for edge in edges:
+            source = edge.get("source")
+            target = edge.get("target")
+            if source not in node_ids:
+                invalid_edges.append(f"Edge {edge.get('id')}: source '{source}' no existe")
+            if target not in node_ids:
+                invalid_edges.append(f"Edge {edge.get('id')}: target '{target}' no existe")
+
+        if invalid_edges:
+            print(f"[ERROR] Edges inválidos encontrados:")
+            for err in invalid_edges:
+                print(f"  - {err}")
+            print(f"[DEBUG] Node IDs disponibles: {node_ids}")
+
+        # Validación 4: Advertencia si hay pocos edges
+        # Un grafo conectado necesita al menos N-1 edges
+        if len(edges) < len(nodes) - 1:
+            print(f"[WARNING] Posible grafo desconectado: {len(nodes)} nodos pero solo {len(edges)} edges")
+            print(f"[WARNING] Un grafo conectado necesita al menos {len(nodes)-1} edges")
+
+            # Encontrar nodos sin conexiones
+            nodes_in_edges = set()
+            for edge in edges:
+                nodes_in_edges.add(edge.get("source"))
+                nodes_in_edges.add(edge.get("target"))
+
+            disconnected = node_ids - nodes_in_edges
+            if disconnected:
+                print(f"[WARNING] Nodos sin conexiones: {disconnected}")
+
         return GLSLImportResponse(
-            nodes=result.get("nodes", []),
-            edges=result.get("edges", []),
+            nodes=nodes,
+            edges=edges,
             analysis=result.get("analysis")
         )
 
