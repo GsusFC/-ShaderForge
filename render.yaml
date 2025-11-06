@@ -10,7 +10,5 @@ services:
     envVars:
       - key: CORS_ORIGINS
         value: https://shaderforge.netlify.app,http://localhost:5173
-      - key: PYTHON_VERSION
-        value: 3.11
       - key: ANTHROPIC_API_KEY
         sync: false  # Must be set manually in Render dashboard
