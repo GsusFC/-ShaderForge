@@ -120,35 +120,55 @@ Devuelve SOLO el JSON, sin markdown ni explicaciones."""
         response_text = message.content[0].text
 
         # Log de la respuesta completa para debugging
-        print(f"[DEBUG] Respuesta de Claude (primeros 500 chars): {response_text[:500]}")
+        print(f"[DEBUG] Respuesta de Claude - longitud: {len(response_text)} chars")
+        print(f"[DEBUG] Primeros 1000 chars:\n{response_text[:1000]}")
+        print(f"[DEBUG] Últimos 200 chars:\n{response_text[-200:]}")
 
-        # Limpiar y extraer JSON de múltiples formatos posibles
+        # Limpiar respuesta
         cleaned_text = response_text.strip()
 
-        # Intentar extraer JSON de bloques markdown (múltiples patrones)
-        json_patterns = [
-            r'```json\s*(\{[\s\S]*?\})\s*```',  # ```json { ... } ```
-            r'```\s*(\{[\s\S]*?\})\s*```',       # ``` { ... } ```
-            r'(\{[\s\S]*\})'                      # { ... } sin markdown
+        # Estrategia 1: Remover bloques markdown y extraer el contenido
+        # Capturar TODO lo que está dentro de los backticks (no solo hasta primera })
+        markdown_patterns = [
+            r'```json\s*(.+?)\s*```',  # ```json ... ```
+            r'```\s*(.+?)\s*```',       # ``` ... ```
         ]
 
-        parsed_json = None
-        for pattern in json_patterns:
-            json_match = re.search(pattern, cleaned_text)
-            if json_match:
-                try:
-                    parsed_json = json.loads(json_match.group(1))
-                    print(f"[DEBUG] JSON parseado exitosamente con patrón: {pattern}")
-                    break
-                except json.JSONDecodeError:
-                    continue
+        json_text = None
+        for pattern in markdown_patterns:
+            match = re.search(pattern, cleaned_text, re.DOTALL)
+            if match:
+                json_text = match.group(1).strip()
+                print(f"[DEBUG] Extraído de markdown con patrón: {pattern}")
+                print(f"[DEBUG] JSON extraído (primeros 300 chars): {json_text[:300]}")
+                break
 
-        if not parsed_json:
-            # Si no se pudo parsear, mostrar qué se recibió
-            print(f"[ERROR] No se pudo parsear JSON. Respuesta completa: {response_text}")
-            raise ValueError(f"No se pudo extraer JSON válido de la respuesta. Respuesta recibida: {response_text[:200]}...")
+        # Estrategia 2: Si no hay markdown, buscar desde primera { hasta última }
+        if not json_text:
+            first_brace = cleaned_text.find('{')
+            last_brace = cleaned_text.rfind('}')
+            if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
+                json_text = cleaned_text[first_brace:last_brace + 1]
+                print(f"[DEBUG] Extraído JSON sin markdown (desde pos {first_brace} hasta {last_brace})")
+            else:
+                print(f"[ERROR] No se encontraron llaves {{ }} en la respuesta")
+                print(f"[ERROR] Respuesta completa:\n{response_text}")
+                raise ValueError(
+                    f"No se pudo encontrar JSON en la respuesta de Claude. "
+                    f"Respuesta (primeros 500 chars): {response_text[:500]}"
+                )
 
-        result = parsed_json
+        # Intentar parsear el JSON extraído
+        try:
+            result = json.loads(json_text)
+            print(f"[DEBUG] JSON parseado exitosamente")
+        except json.JSONDecodeError as e:
+            print(f"[ERROR] Error parseando JSON: {str(e)}")
+            print(f"[ERROR] JSON que intentamos parsear:\n{json_text[:1000]}")
+            raise ValueError(
+                f"El JSON extraído no es válido: {str(e)}. "
+                f"JSON (primeros 500 chars): {json_text[:500]}"
+            )
 
         return GLSLImportResponse(
             nodes=result.get("nodes", []),
