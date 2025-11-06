@@ -2,6 +2,8 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 import os
+import json
+import re
 
 router = APIRouter(prefix="/api/v1/glsl-import", tags=["glsl-import"])
 
@@ -118,9 +120,6 @@ Devuelve SOLO el JSON, sin markdown ni explicaciones."""
         response_text = message.content[0].text
 
         # Limpiar markdown si está presente
-        import json
-        import re
-
         # Intentar extraer JSON del markdown
         json_match = re.search(r'```(?:json)?\s*(\{.*\})\s*```', response_text, re.DOTALL)
         if json_match:
