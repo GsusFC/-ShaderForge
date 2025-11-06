@@ -487,7 +487,7 @@ export const CUSTOM_NODES: Record<string, NodeDefinition> = {
   custom_code: {
     id: 'custom_code',
     label: 'Custom Code',
-    description: 'Escribe GLSL personalizado',
+    description: 'Escribe GLSL personalizado con soporte LYGIA (#include)',
     category: 'utility',
     color: '#f97316',
     inputs: [],  // Dinámico
@@ -498,7 +498,7 @@ export const CUSTOM_NODES: Record<string, NodeDefinition> = {
         label: 'GLSL Code',
         type: 'text',
         default: 'float output = input1 * 2.0;',
-        description: 'Código GLSL personalizado. Usa {output}, {input1}, {input2}, etc.',
+        description: 'Código GLSL personalizado. Usa {output}, {input1}, etc. Soporta #include "lygia/..."',
       },
       {
         name: 'num_inputs',

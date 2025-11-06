@@ -1,6 +1,7 @@
 from typing import Dict, List, Tuple, Set, Any, Optional
 from dataclasses import dataclass, field
 import re
+from .lygia_resolver import resolve_lygia_includes
 
 @dataclass
 class CompiledShader:
@@ -805,5 +806,11 @@ float simplex(vec2 p) {
 }}""")
         
         full_code = "\n\n".join(parts).strip()
-        
+
+        # Resolver #include directives de LYGIA (si existen)
+        try:
+            full_code = resolve_lygia_includes(full_code)
+        except Exception as e:
+            self.warnings.append(f"LYGIA include resolution failed: {str(e)}")
+
         return full_code
