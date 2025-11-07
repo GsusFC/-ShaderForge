@@ -56,6 +56,25 @@ class GLSLValidator:
         'dFdx', 'dFdy', 'fwidth'
     }
 
+    # Vector swizzles - no son variables, son accesos a componentes de vectores
+    GLSL_SWIZZLES = {
+        # Componentes individuales
+        'x', 'y', 'z', 'w',
+        'r', 'g', 'b', 'a',
+        's', 't', 'p', 'q',
+        # Swizzles de 2 componentes (los más comunes)
+        'xy', 'xz', 'xw', 'yx', 'yz', 'yw', 'zx', 'zy', 'zw', 'wx', 'wy', 'wz',
+        'xx', 'yy', 'zz', 'ww',
+        'rg', 'rb', 'gb', 'ra', 'ga', 'ba',
+        'st', 'sp', 'sq', 'tp', 'tq', 'pq',
+        # Swizzles de 3 componentes (los más comunes)
+        'xyz', 'xzy', 'yxz', 'yzx', 'zxy', 'zyx',
+        'rgb', 'rbg', 'grb', 'gbr', 'brg', 'bgr',
+        'stp', 'stq', 'spq', 'tpq',
+        # Swizzles de 4 componentes
+        'xyzw', 'rgba', 'stpq'
+    }
+
     # Qualifiers
     GLSL_QUALIFIERS = {
         'const', 'in', 'out', 'inout', 'uniform', 'varying',
@@ -220,6 +239,9 @@ class GLSLValidator:
                 if identifier in self.declared_uniforms:
                     continue
                 if identifier in self.declared_variables:
+                    continue
+                # Ignorar swizzles de vectores (xy, xyz, rgb, etc.)
+                if identifier in self.GLSL_SWIZZLES:
                     continue
 
                 # Puede ser parámetro de función

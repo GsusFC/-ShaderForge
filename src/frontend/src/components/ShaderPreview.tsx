@@ -39,9 +39,10 @@ interface ShaderMeshProps {
   uniforms?: any[]
   onError: (error: string) => void
   onSuccess: () => void
+  frameCountRef: React.MutableRefObject<number>
 }
 
-function ShaderMesh({ fragmentShader, uniforms, onError, onSuccess }: ShaderMeshProps) {
+function ShaderMesh({ fragmentShader, uniforms, onError, onSuccess, frameCountRef }: ShaderMeshProps) {
   const meshRef = useRef<THREE.Mesh>(null)
 
   // Transform and create shader material with uniforms
@@ -121,6 +122,9 @@ function ShaderMesh({ fragmentShader, uniforms, onError, onSuccess }: ShaderMesh
 
   // Animate uniforms
   useFrame((state) => {
+    // Increment frame count for FPS calculation
+    frameCountRef.current++
+
     if (meshRef.current && shaderMaterial.uniforms) {
       const newTime = state.clock.getElapsedTime()
       shaderMaterial.uniforms.iTime.value = newTime
@@ -213,7 +217,6 @@ export default function ShaderPreview({ shaderCode, uniforms }: ShaderPreviewPro
               frameCountRef.current = 0
               setLastFrameTime(Date.now())
             }}
-            onPointerMissed={() => frameCountRef.current++}
           >
             <color attach="background" args={['#000000']} />
 
@@ -223,6 +226,7 @@ export default function ShaderPreview({ shaderCode, uniforms }: ShaderPreviewPro
               uniforms={uniforms}
               onError={handleError}
               onSuccess={handleSuccess}
+              frameCountRef={frameCountRef}
             />
           </Canvas>
         ) : (
