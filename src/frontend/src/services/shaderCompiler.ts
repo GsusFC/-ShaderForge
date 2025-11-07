@@ -42,8 +42,19 @@ void main() {
     'void main()'
   )
 
-  // Add varying vUv at the top if not present
-  if (!transformedCode.includes('varying vec2 vUv')) {
+  // Add required uniforms and varyings at the top if not present
+  const hasUniforms = transformedCode.includes('uniform')
+  if (!hasUniforms) {
+    const uniformDeclarations = `precision highp float;
+
+uniform vec2 iResolution;
+uniform float iTime;
+uniform vec2 iMouse;
+varying vec2 vUv;
+
+`
+    transformedCode = uniformDeclarations + transformedCode
+  } else if (!transformedCode.includes('varying vec2 vUv')) {
     transformedCode = 'varying vec2 vUv;\n\n' + transformedCode
   }
 
