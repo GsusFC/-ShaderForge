@@ -1,0 +1,25 @@
+{
+  "name": "shaderforge-e2e-tests",
+  "version": "1.0.0",
+  "description": "End-to-end tests and automation for ShaderForge AI using Chrome DevTools MCP",
+  "scripts": {
+    "test:basic": "node basic-frontend-test.js",
+    "test:editor": "node shader-editor-test.js",
+    "test:api": "node api-integration-test.js",
+    "test:all": "npm run test:basic && npm run test:editor && npm run test:api"
+  },
+  "keywords": [
+    "shaderforge",
+    "testing",
+    "e2e",
+    "automation",
+    "chrome-devtools",
+    "mcp"
+  ],
+  "author": "ShaderForge Team",
+  "license": "MIT",
+  "devDependencies": {},
+  "engines": {
+    "node": ">=20.19.0"
+  }
+}

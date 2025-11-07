@@ -165,6 +165,24 @@ cd src/scraper
 python shadertoy.py
 ```
 
+### Testing
+```bash
+# Backend tests
+cd src/backend
+pytest test_compiler.py -v
+
+# Frontend tests
+cd src/frontend
+npm run test
+
+# E2E tests with Chrome DevTools MCP
+cd tests/e2e
+npm run test:all
+
+# Ver guía completa de testing
+cat tests/TESTING_GUIDE.md
+```
+
 ## 📝 Próximos Pasos
 
 1. **Obtener API Keys** (opcional para testing completo):
@@ -184,6 +202,7 @@ python shadertoy.py
    - [ARCHITECTURE.md](./files/ARCHITECTURE.md) - Arquitectura técnica
    - [API.md](./files/API.md) - Especificación de APIs
    - [ROADMAP.md](./files/ROADMAP.md) - Plan de desarrollo
+   - [TESTING_GUIDE.md](./tests/TESTING_GUIDE.md) - Guía de testing completa
 
 4. **Primeras features a implementar**:
    - [ ] Scraper de Shadertoy masivo
