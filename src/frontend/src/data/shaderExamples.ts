@@ -5,6 +5,7 @@
  * - Beginner: 3 shaders (5-8 nodos)
  * - Intermediate: 3 shaders (10-15 nodos)
  * - Advanced: 2 shaders (18-20 nodos)
+ * - Code Golf: Shaders ultra-compactos (solo código)
  *
  * Cada ejemplo enseña técnicas específicas y es 100% construible con nodos.
  */
@@ -22,6 +23,7 @@ export interface ShaderExample {
   nodeCount: number
   nodes: Node[]
   edges: Edge[]
+  glslCode?: string // For code golf examples
   thumbnail?: string  // Opcional para futuro
 }
 
@@ -90,10 +92,10 @@ export const BEGINNER_EXAMPLES: ShaderExample[] = [
       },
     ],
     edges: [
-      { id: 'e1', source: 'n1', target: 'n3', sourceHandle: 'output', targetHandle: 'x' },
-      { id: 'e2', source: 'n1', target: 'n3', sourceHandle: 'output', targetHandle: 'y' },
-      { id: 'e3', source: 'n2', target: 'n3', sourceHandle: 'output', targetHandle: 'z' },
-      { id: 'e4', source: 'n3', target: 'n4', sourceHandle: 'output', targetHandle: 'input' },
+      { id: 'e1', source: 'n1', target: 'n3', sourceHandle: 'uv', targetHandle: 'x' },
+      { id: 'e2', source: 'n1', target: 'n3', sourceHandle: 'uv', targetHandle: 'y' },
+      { id: 'e3', source: 'n2', target: 'n3', sourceHandle: 'value', targetHandle: 'z' },
+      { id: 'e4', source: 'n3', target: 'n4', sourceHandle: 'vec', targetHandle: 'color' },
     ],
   },
   {
@@ -102,7 +104,7 @@ export const BEGINNER_EXAMPLES: ShaderExample[] = [
     description: 'Círculo que pulsa con el tiempo usando distancia',
     difficulty: 'beginner',
     techniques: ['Distance function', 'Time animation', 'Smoothstep'],
-    nodeCount: 8,
+    nodeCount: 9,
     nodes: [
       {
         id: 'n1',
@@ -194,6 +196,18 @@ export const BEGINNER_EXAMPLES: ShaderExample[] = [
         type: 'shaderNode',
         position: { x: 1050, y: 200 },
         data: {
+          label: 'Float→Vec3',
+          nodeType: 'float_to_vec3',
+          category: 'utility',
+          color: '#ec4899',
+          parameters: {},
+        },
+      },
+      {
+        id: 'n9',
+        type: 'shaderNode',
+        position: { x: 1250, y: 200 },
+        data: {
           label: 'Fragment Output',
           nodeType: 'fragment_output',
           category: 'output',
@@ -203,14 +217,15 @@ export const BEGINNER_EXAMPLES: ShaderExample[] = [
       },
     ],
     edges: [
-      { id: 'e1', source: 'n3', target: 'n4', sourceHandle: 'output', targetHandle: 'x' },
-      { id: 'e2', source: 'n3', target: 'n4', sourceHandle: 'output', targetHandle: 'y' },
-      { id: 'e3', source: 'n1', target: 'n5', sourceHandle: 'output', targetHandle: 'a' },
-      { id: 'e4', source: 'n4', target: 'n5', sourceHandle: 'output', targetHandle: 'b' },
-      { id: 'e5', source: 'n2', target: 'n6', sourceHandle: 'output', targetHandle: 'input' },
-      { id: 'e6', source: 'n5', target: 'n7', sourceHandle: 'output', targetHandle: 'edge0' },
-      { id: 'e7', source: 'n6', target: 'n7', sourceHandle: 'output', targetHandle: 'edge1' },
-      { id: 'e8', source: 'n7', target: 'n8', sourceHandle: 'output', targetHandle: 'input' },
+      { id: 'e1', source: 'n3', target: 'n4', sourceHandle: 'value', targetHandle: 'x' },
+      { id: 'e2', source: 'n3', target: 'n4', sourceHandle: 'value', targetHandle: 'y' },
+      { id: 'e3', source: 'n1', target: 'n5', sourceHandle: 'uv', targetHandle: 'a' },
+      { id: 'e4', source: 'n4', target: 'n5', sourceHandle: 'vec', targetHandle: 'b' },
+      { id: 'e5', source: 'n2', target: 'n6', sourceHandle: 'time', targetHandle: 'value' },
+      { id: 'e6', source: 'n5', target: 'n7', sourceHandle: 'dist', targetHandle: 'edge0' },
+      { id: 'e7', source: 'n6', target: 'n7', sourceHandle: 'result', targetHandle: 'edge1' },
+      { id: 'e8', source: 'n7', target: 'n8', sourceHandle: 'result', targetHandle: 'value' },
+      { id: 'e9', source: 'n8', target: 'n9', sourceHandle: 'vec', targetHandle: 'color' },
     ],
   },
   {
@@ -296,11 +311,11 @@ export const BEGINNER_EXAMPLES: ShaderExample[] = [
       },
     ],
     edges: [
-      { id: 'e1', source: 'n1', target: 'n3', sourceHandle: 'output', targetHandle: 'a' },
-      { id: 'e2', source: 'n2', target: 'n3', sourceHandle: 'output', targetHandle: 'b' },
-      { id: 'e3', source: 'n3', target: 'n4', sourceHandle: 'output', targetHandle: 'input' },
-      { id: 'e4', source: 'n4', target: 'n5', sourceHandle: 'output', targetHandle: 'input' },
-      { id: 'e5', source: 'n5', target: 'n6', sourceHandle: 'output', targetHandle: 'input' },
+      { id: 'e1', source: 'n1', target: 'n3', sourceHandle: 'uv', targetHandle: 'a' },
+      { id: 'e2', source: 'n2', target: 'n3', sourceHandle: 'time', targetHandle: 'b' },
+      { id: 'e3', source: 'n3', target: 'n4', sourceHandle: 'result', targetHandle: 'value' },
+      { id: 'e4', source: 'n4', target: 'n5', sourceHandle: 'result', targetHandle: 'value' },
+      { id: 'e5', source: 'n5', target: 'n6', sourceHandle: 'vec', targetHandle: 'color' },
     ],
   },
 ]
@@ -314,7 +329,7 @@ export const INTERMEDIATE_EXAMPLES: ShaderExample[] = [
     description: 'Ruido de Perlin animado con escala y velocidad',
     difficulty: 'intermediate',
     techniques: ['Perlin noise', 'Scale transformation', 'Time offset', 'Multiplication'],
-    nodeCount: 12,
+    nodeCount: 10,
     nodes: [
       {
         id: 'n1',
@@ -443,15 +458,15 @@ export const INTERMEDIATE_EXAMPLES: ShaderExample[] = [
       },
     ],
     edges: [
-      { id: 'e1', source: 'n1', target: 'n4', sourceHandle: 'output', targetHandle: 'a' },
-      { id: 'e2', source: 'n3', target: 'n4', sourceHandle: 'output', targetHandle: 'b' },
-      { id: 'e3', source: 'n2', target: 'n6', sourceHandle: 'output', targetHandle: 'a' },
-      { id: 'e4', source: 'n5', target: 'n6', sourceHandle: 'output', targetHandle: 'b' },
-      { id: 'e5', source: 'n4', target: 'n7', sourceHandle: 'output', targetHandle: 'a' },
-      { id: 'e6', source: 'n6', target: 'n7', sourceHandle: 'output', targetHandle: 'b' },
-      { id: 'e7', source: 'n7', target: 'n8', sourceHandle: 'output', targetHandle: 'input' },
-      { id: 'e8', source: 'n8', target: 'n9', sourceHandle: 'output', targetHandle: 'input' },
-      { id: 'e9', source: 'n9', target: 'n10', sourceHandle: 'output', targetHandle: 'input' },
+      { id: 'e1', source: 'n1', target: 'n4', sourceHandle: 'uv', targetHandle: 'a' },
+      { id: 'e2', source: 'n3', target: 'n4', sourceHandle: 'value', targetHandle: 'b' },
+      { id: 'e3', source: 'n2', target: 'n6', sourceHandle: 'time', targetHandle: 'a' },
+      { id: 'e4', source: 'n5', target: 'n6', sourceHandle: 'value', targetHandle: 'b' },
+      { id: 'e5', source: 'n4', target: 'n7', sourceHandle: 'result', targetHandle: 'a' },
+      { id: 'e6', source: 'n6', target: 'n7', sourceHandle: 'result', targetHandle: 'b' },
+      { id: 'e7', source: 'n7', target: 'n8', sourceHandle: 'result', targetHandle: 'coord' },
+      { id: 'e8', source: 'n8', target: 'n9', sourceHandle: 'noise', targetHandle: 'value' },
+      { id: 'e9', source: 'n9', target: 'n10', sourceHandle: 'vec', targetHandle: 'color' },
     ],
   },
   {
@@ -460,7 +475,7 @@ export const INTERMEDIATE_EXAMPLES: ShaderExample[] = [
     description: 'Esfera usando Signed Distance Field',
     difficulty: 'intermediate',
     techniques: ['SDF', 'Smoothstep', 'Vector operations', 'Centering'],
-    nodeCount: 10,
+    nodeCount: 9,
     nodes: [
       {
         id: 'n1',
@@ -576,14 +591,14 @@ export const INTERMEDIATE_EXAMPLES: ShaderExample[] = [
       },
     ],
     edges: [
-      { id: 'e1', source: 'n1', target: 'n3', sourceHandle: 'output', targetHandle: 'a' },
-      { id: 'e2', source: 'n2', target: 'n3', sourceHandle: 'output', targetHandle: 'b' },
-      { id: 'e3', source: 'n3', target: 'n4', sourceHandle: 'output', targetHandle: 'point' },
-      { id: 'e4', source: 'n4', target: 'n7', sourceHandle: 'output', targetHandle: 'x' },
-      { id: 'e5', source: 'n5', target: 'n7', sourceHandle: 'output', targetHandle: 'edge0' },
-      { id: 'e6', source: 'n6', target: 'n7', sourceHandle: 'output', targetHandle: 'edge1' },
-      { id: 'e7', source: 'n7', target: 'n8', sourceHandle: 'output', targetHandle: 'input' },
-      { id: 'e8', source: 'n8', target: 'n9', sourceHandle: 'output', targetHandle: 'input' },
+      { id: 'e1', source: 'n1', target: 'n3', sourceHandle: 'uv', targetHandle: 'a' },
+      { id: 'e2', source: 'n2', target: 'n3', sourceHandle: 'value', targetHandle: 'b' },
+      { id: 'e3', source: 'n3', target: 'n4', sourceHandle: 'result', targetHandle: 'point' },
+      { id: 'e4', source: 'n4', target: 'n7', sourceHandle: 'distance', targetHandle: 'x' },
+      { id: 'e5', source: 'n5', target: 'n7', sourceHandle: 'value', targetHandle: 'edge0' },
+      { id: 'e6', source: 'n6', target: 'n7', sourceHandle: 'value', targetHandle: 'edge1' },
+      { id: 'e7', source: 'n7', target: 'n8', sourceHandle: 'result', targetHandle: 'value' },
+      { id: 'e8', source: 'n8', target: 'n9', sourceHandle: 'vec', targetHandle: 'color' },
     ],
   },
   {
@@ -592,7 +607,7 @@ export const INTERMEDIATE_EXAMPLES: ShaderExample[] = [
     description: 'Mezcla de colores usando gradiente UV',
     difficulty: 'intermediate',
     techniques: ['Color pickers', 'Mix/Lerp', 'UV masking'],
-    nodeCount: 15,
+    nodeCount: 6,
     nodes: [
       {
         id: 'n1',
@@ -672,11 +687,11 @@ export const INTERMEDIATE_EXAMPLES: ShaderExample[] = [
       },
     ],
     edges: [
-      { id: 'e1', source: 'n1', target: 'n4', sourceHandle: 'output', targetHandle: 'input' },
-      { id: 'e2', source: 'n2', target: 'n5', sourceHandle: 'output', targetHandle: 'a' },
-      { id: 'e3', source: 'n3', target: 'n5', sourceHandle: 'output', targetHandle: 'b' },
-      { id: 'e4', source: 'n4', target: 'n5', sourceHandle: 'output', targetHandle: 't' },
-      { id: 'e5', source: 'n5', target: 'n6', sourceHandle: 'output', targetHandle: 'input' },
+      { id: 'e1', source: 'n1', target: 'n4', sourceHandle: 'uv', targetHandle: 'vector' },
+      { id: 'e2', source: 'n2', target: 'n5', sourceHandle: 'color', targetHandle: 'colorA' },
+      { id: 'e3', source: 'n3', target: 'n5', sourceHandle: 'color', targetHandle: 'colorB' },
+      { id: 'e4', source: 'n4', target: 'n5', sourceHandle: 'component', targetHandle: 'factor' },
+      { id: 'e5', source: 'n5', target: 'n6', sourceHandle: 'result', targetHandle: 'color' },
     ],
   },
 ]
@@ -690,7 +705,7 @@ export const ADVANCED_EXAMPLES: ShaderExample[] = [
     description: 'Esfera con iluminación básica usando raymarching simplificado',
     difficulty: 'advanced',
     techniques: ['SDF', 'Normal calculation', 'Dot product', 'Lighting'],
-    nodeCount: 20,
+    nodeCount: 15,
     nodes: [
       {
         id: 'n1',
@@ -877,20 +892,20 @@ export const ADVANCED_EXAMPLES: ShaderExample[] = [
       },
     ],
     edges: [
-      { id: 'e1', source: 'n1', target: 'n3', sourceHandle: 'output', targetHandle: 'a' },
-      { id: 'e2', source: 'n2', target: 'n3', sourceHandle: 'output', targetHandle: 'b' },
-      { id: 'e3', source: 'n3', target: 'n4', sourceHandle: 'output', targetHandle: 'point' },
-      { id: 'e4', source: 'n6', target: 'n5', sourceHandle: 'output', targetHandle: 'x' },
-      { id: 'e5', source: 'n7', target: 'n5', sourceHandle: 'output', targetHandle: 'y' },
-      { id: 'e6', source: 'n8', target: 'n5', sourceHandle: 'output', targetHandle: 'z' },
-      { id: 'e7', source: 'n5', target: 'n9', sourceHandle: 'output', targetHandle: 'input' },
-      { id: 'e8', source: 'n3', target: 'n10', sourceHandle: 'output', targetHandle: 'input' },
-      { id: 'e9', source: 'n9', target: 'n11', sourceHandle: 'output', targetHandle: 'a' },
-      { id: 'e10', source: 'n10', target: 'n11', sourceHandle: 'output', targetHandle: 'b' },
-      { id: 'e11', source: 'n11', target: 'n12', sourceHandle: 'output', targetHandle: 'a' },
-      { id: 'e12', source: 'n13', target: 'n12', sourceHandle: 'output', targetHandle: 'b' },
-      { id: 'e13', source: 'n12', target: 'n14', sourceHandle: 'output', targetHandle: 'input' },
-      { id: 'e14', source: 'n14', target: 'n15', sourceHandle: 'output', targetHandle: 'input' },
+      { id: 'e1', source: 'n1', target: 'n3', sourceHandle: 'uv', targetHandle: 'a' },
+      { id: 'e2', source: 'n2', target: 'n3', sourceHandle: 'value', targetHandle: 'b' },
+      { id: 'e3', source: 'n3', target: 'n4', sourceHandle: 'result', targetHandle: 'point' },
+      { id: 'e4', source: 'n6', target: 'n5', sourceHandle: 'value', targetHandle: 'x' },
+      { id: 'e5', source: 'n7', target: 'n5', sourceHandle: 'value', targetHandle: 'y' },
+      { id: 'e6', source: 'n8', target: 'n5', sourceHandle: 'value', targetHandle: 'z' },
+      { id: 'e7', source: 'n5', target: 'n9', sourceHandle: 'vec', targetHandle: 'vector' },
+      { id: 'e8', source: 'n3', target: 'n10', sourceHandle: 'result', targetHandle: 'vector' },
+      { id: 'e9', source: 'n9', target: 'n11', sourceHandle: 'normalized', targetHandle: 'a' },
+      { id: 'e10', source: 'n10', target: 'n11', sourceHandle: 'normalized', targetHandle: 'b' },
+      { id: 'e11', source: 'n11', target: 'n12', sourceHandle: 'result', targetHandle: 'a' },
+      { id: 'e12', source: 'n13', target: 'n12', sourceHandle: 'value', targetHandle: 'b' },
+      { id: 'e13', source: 'n12', target: 'n14', sourceHandle: 'result', targetHandle: 'value' },
+      { id: 'e14', source: 'n14', target: 'n15', sourceHandle: 'vec', targetHandle: 'color' },
     ],
   },
   {
@@ -899,7 +914,7 @@ export const ADVANCED_EXAMPLES: ShaderExample[] = [
     description: 'Patrón fractal usando operaciones matemáticas repetidas',
     difficulty: 'advanced',
     techniques: ['Fract function', 'Sin/Cos', 'Multiplication', 'Pattern repetition'],
-    nodeCount: 18,
+    nodeCount: 14,
     nodes: [
       {
         id: 'n1',
@@ -1072,20 +1087,20 @@ export const ADVANCED_EXAMPLES: ShaderExample[] = [
       },
     ],
     edges: [
-      { id: 'e1', source: 'n1', target: 'n4', sourceHandle: 'output', targetHandle: 'a' },
-      { id: 'e2', source: 'n3', target: 'n4', sourceHandle: 'output', targetHandle: 'b' },
-      { id: 'e3', source: 'n2', target: 'n5', sourceHandle: 'output', targetHandle: 'a' },
-      { id: 'e4', source: 'n6', target: 'n5', sourceHandle: 'output', targetHandle: 'b' },
-      { id: 'e5', source: 'n4', target: 'n7', sourceHandle: 'output', targetHandle: 'a' },
-      { id: 'e6', source: 'n5', target: 'n7', sourceHandle: 'output', targetHandle: 'b' },
-      { id: 'e7', source: 'n7', target: 'n8', sourceHandle: 'output', targetHandle: 'input' },
-      { id: 'e8', source: 'n8', target: 'n9', sourceHandle: 'output', targetHandle: 'input' },
-      { id: 'e9', source: 'n8', target: 'n10', sourceHandle: 'output', targetHandle: 'input' },
-      { id: 'e10', source: 'n9', target: 'n11', sourceHandle: 'output', targetHandle: 'a' },
-      { id: 'e11', source: 'n10', target: 'n11', sourceHandle: 'output', targetHandle: 'b' },
-      { id: 'e12', source: 'n11', target: 'n12', sourceHandle: 'output', targetHandle: 'input' },
-      { id: 'e13', source: 'n12', target: 'n13', sourceHandle: 'output', targetHandle: 'input' },
-      { id: 'e14', source: 'n13', target: 'n14', sourceHandle: 'output', targetHandle: 'input' },
+      { id: 'e1', source: 'n1', target: 'n4', sourceHandle: 'uv', targetHandle: 'a' },
+      { id: 'e2', source: 'n3', target: 'n4', sourceHandle: 'value', targetHandle: 'b' },
+      { id: 'e3', source: 'n2', target: 'n5', sourceHandle: 'time', targetHandle: 'a' },
+      { id: 'e4', source: 'n6', target: 'n5', sourceHandle: 'value', targetHandle: 'b' },
+      { id: 'e5', source: 'n4', target: 'n7', sourceHandle: 'result', targetHandle: 'a' },
+      { id: 'e6', source: 'n5', target: 'n7', sourceHandle: 'result', targetHandle: 'b' },
+      { id: 'e7', source: 'n7', target: 'n8', sourceHandle: 'result', targetHandle: 'value' },
+      { id: 'e8', source: 'n8', target: 'n9', sourceHandle: 'result', targetHandle: 'value' },
+      { id: 'e9', source: 'n8', target: 'n10', sourceHandle: 'result', targetHandle: 'value' },
+      { id: 'e10', source: 'n9', target: 'n11', sourceHandle: 'result', targetHandle: 'a' },
+      { id: 'e11', source: 'n10', target: 'n11', sourceHandle: 'result', targetHandle: 'b' },
+      { id: 'e12', source: 'n11', target: 'n12', sourceHandle: 'result', targetHandle: 'value' },
+      { id: 'e13', source: 'n12', target: 'n13', sourceHandle: 'result', targetHandle: 'value' },
+      { id: 'e14', source: 'n13', target: 'n14', sourceHandle: 'vec', targetHandle: 'color' },
     ],
   },
 ]
@@ -1099,9 +1114,17 @@ export const CODE_GOLF_EXAMPLES: ShaderExample[] = [
     description: 'Efecto de plasma ultra-compacto - Mejor en modo código',
     difficulty: 'code-golf',
     techniques: ['Sin loops', 'Funciones trigonométricas', 'Code golf'],
-    nodeCount: 0, // Too complex for nodes
-    nodes: [], // Empty - code mode only
+    nodeCount: 0,
+    nodes: [],
     edges: [],
+    glslCode: `// Plasma Effect - Ultra Compact
+vec2 uv = fragCoord / iResolution.xy;
+vec3 col = vec3(0);
+for(float i = 0.0; i < 3.0; i++) {
+  vec2 p = uv * 5.0 + iTime * 0.3;
+  col[int(i)] = sin(p.x + sin(p.y + iTime + i)) * 0.5 + 0.5;
+}
+fragColor = vec4(col, 1.0);`
   },
   {
     id: 'tunnel-compact',
@@ -1112,6 +1135,13 @@ export const CODE_GOLF_EXAMPLES: ShaderExample[] = [
     nodeCount: 0,
     nodes: [],
     edges: [],
+    glslCode: `// Infinite Tunnel - Ultra Compact
+vec2 uv = (fragCoord - 0.5 * iResolution.xy) / iResolution.y;
+float a = atan(uv.y, uv.x);
+float r = length(uv);
+vec2 uv2 = vec2(a / 3.14159, 1.0 / r + iTime);
+vec3 col = vec3(sin(uv2.x * 10.0 + iTime), sin(uv2.y * 5.0), cos(uv2.x * 8.0 - iTime));
+fragColor = vec4(col * (1.0 - r * 0.5), 1.0);`
   },
   {
     id: 'fractal-compact',
@@ -1122,6 +1152,17 @@ export const CODE_GOLF_EXAMPLES: ShaderExample[] = [
     nodeCount: 0,
     nodes: [],
     edges: [],
+    glslCode: `// Mandelbrot Fractal - Ultra Compact
+vec2 c = (fragCoord - 0.5 * iResolution.xy) / iResolution.y * 3.0 - vec2(0.5, 0.0);
+vec2 z = vec2(0.0);
+float iterations = 0.0;
+for(int i = 0; i < 100; i++) {
+  z = vec2(z.x * z.x - z.y * z.y, 2.0 * z.x * z.y) + c;
+  if(length(z) > 2.0) break;
+  iterations++;
+}
+vec3 col = 0.5 + 0.5 * cos(3.0 + iterations * 0.15 + vec3(0.0, 0.6, 1.0));
+fragColor = vec4(col, 1.0);`
   },
 ]
 

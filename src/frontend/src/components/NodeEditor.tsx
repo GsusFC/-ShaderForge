@@ -653,9 +653,17 @@ export default function NodeEditor() {
       <ShaderGallery
         isOpen={showGallery}
         onClose={() => setShowGallery(false)}
-        onLoadExample={(nodes, edges) => {
-          setNodes(nodes)
-          setEdges(edges)
+        onLoadExample={(nodes, edges, glslCode) => {
+          if (glslCode) {
+            // Code golf example - switch to code mode
+            setUserGLSLCode(glslCode)
+            setEditorMode('code')
+          } else {
+            // Node-based example - switch to nodes mode
+            setNodes(nodes)
+            setEdges(edges)
+            setEditorMode('nodes')
+          }
         }}
       />
     </div>

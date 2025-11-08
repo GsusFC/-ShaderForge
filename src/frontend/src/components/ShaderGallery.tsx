@@ -20,7 +20,7 @@ import '../styles/ShaderGallery.css'
 interface ShaderGalleryProps {
   isOpen: boolean
   onClose: () => void
-  onLoadExample: (nodes: any[], edges: any[]) => void
+  onLoadExample: (nodes: any[], edges: any[], glslCode?: string) => void
 }
 
 const DIFFICULTY_CONFIG = {
@@ -59,7 +59,7 @@ export default function ShaderGallery({ isOpen, onClose, onLoadExample }: Shader
   const currentExamples = EXAMPLES_BY_DIFFICULTY[selectedDifficulty]
 
   const handleLoadExample = (example: ShaderExample) => {
-    onLoadExample(example.nodes, example.edges)
+    onLoadExample(example.nodes, example.edges, example.glslCode)
     onClose()
   }
 

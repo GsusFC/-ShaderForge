@@ -91,7 +91,7 @@ export default function CustomNode({ id, data, selected, isConnectable }: Custom
     >
       {/* Input Handles - múltiples si es necesario */}
       {numInputs > 0 && definition?.inputs.map((input, index) => {
-        const handleId = index === 0 ? 'input' : `input${index}`
+        const handleId = input.name // Use input name as handle ID
         const verticalOffset = numInputs > 1 ? (index / (numInputs - 1)) * 100 : 50
 
         return (
@@ -136,7 +136,7 @@ export default function CustomNode({ id, data, selected, isConnectable }: Custom
 
       {/* Output Handles - múltiples si es necesario */}
       {numOutputs > 0 && definition?.outputs.map((output, index) => {
-        const handleId = index === 0 ? 'output' : `output${index}`
+        const handleId = output.name // Use output name as handle ID
         const verticalOffset = numOutputs > 1 ? (index / (numOutputs - 1)) * 100 : 50
 
         return (
