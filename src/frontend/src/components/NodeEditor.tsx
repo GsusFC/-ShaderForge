@@ -153,17 +153,30 @@ export default function NodeEditor() {
   }, [setNodes, setEdges])
 
   const handleLoadExample = useCallback(() => {
-    // Create a simple example shader: UV → Add → Fragment Output
+    // Create a simple animated example shader: UV → Add ← Time → Fragment Output
     const exampleNodes: Node[] = [
       {
         id: 'example-uv',
         type: 'shaderNode',
-        position: { x: 100, y: 200 },
+        position: { x: 100, y: 150 },
         data: {
           label: 'UV Input',
           description: 'Coordenadas UV del vértice',
           category: 'input',
           type: 'uv_input',
+          color: '#4ade80',
+          parameters: {},
+        },
+      },
+      {
+        id: 'example-time',
+        type: 'shaderNode',
+        position: { x: 100, y: 300 },
+        data: {
+          label: 'Time Input',
+          description: 'Tiempo de animación',
+          category: 'input',
+          type: 'time_input',
           color: '#4ade80',
           parameters: {},
         },
@@ -203,6 +216,13 @@ export default function NodeEditor() {
         target: 'example-add',
         sourceHandle: 'output',
         targetHandle: 'input',
+      },
+      {
+        id: 'e-time-add',
+        source: 'example-time',
+        target: 'example-add',
+        sourceHandle: 'output',
+        targetHandle: 'input1',
       },
       {
         id: 'e-add-output',
