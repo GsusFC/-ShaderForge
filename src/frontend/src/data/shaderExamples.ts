@@ -11,7 +11,7 @@
 
 import { Node, Edge } from 'reactflow'
 
-export type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced'
+export type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced' | 'code-golf'
 
 export interface ShaderExample {
   id: string
@@ -1090,18 +1090,55 @@ export const ADVANCED_EXAMPLES: ShaderExample[] = [
   },
 ]
 
+// ===== CODE GOLF SHADERS (Optimized for Code Mode) =====
+
+export const CODE_GOLF_EXAMPLES: ShaderExample[] = [
+  {
+    id: 'plasma-compact',
+    name: 'Plasma (Code Golf)',
+    description: 'Efecto de plasma ultra-compacto - Mejor en modo código',
+    difficulty: 'code-golf',
+    techniques: ['Sin loops', 'Funciones trigonométricas', 'Code golf'],
+    nodeCount: 0, // Too complex for nodes
+    nodes: [], // Empty - code mode only
+    edges: [],
+  },
+  {
+    id: 'tunnel-compact',
+    name: 'Túnel Infinito (Code Golf)',
+    description: 'Túnel 3D en código ultra-compacto - Mejor en modo código',
+    difficulty: 'code-golf',
+    techniques: ['Coordenadas polares', 'atan', 'Code golf'],
+    nodeCount: 0,
+    nodes: [],
+    edges: [],
+  },
+  {
+    id: 'fractal-compact',
+    name: 'Mandelbrot Fractal (Code Golf)',
+    description: 'Fractal de Mandelbrot minimalista - Mejor en modo código',
+    difficulty: 'code-golf',
+    techniques: ['Iteraciones', 'Números complejos', 'Code golf'],
+    nodeCount: 0,
+    nodes: [],
+    edges: [],
+  },
+]
+
 // ===== EXPORTS =====
 
 export const ALL_EXAMPLES: ShaderExample[] = [
   ...BEGINNER_EXAMPLES,
   ...INTERMEDIATE_EXAMPLES,
   ...ADVANCED_EXAMPLES,
+  ...CODE_GOLF_EXAMPLES,
 ]
 
 export const EXAMPLES_BY_DIFFICULTY: Record<DifficultyLevel, ShaderExample[]> = {
   beginner: BEGINNER_EXAMPLES,
   intermediate: INTERMEDIATE_EXAMPLES,
   advanced: ADVANCED_EXAMPLES,
+  'code-golf': CODE_GOLF_EXAMPLES,
 }
 
 export function getExampleById(id: string): ShaderExample | undefined {

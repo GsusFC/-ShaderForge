@@ -11,12 +11,13 @@ import ReactFlow, {
   Panel,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
-import { ChevronDown, Trash2, Code2, Eye, EyeOff, Layers, FileCode } from 'lucide-react'
+import { ChevronDown, Trash2, Code2, Eye, EyeOff, Layers, FileCode, Network, ArrowLeftRight } from 'lucide-react'
 import CustomNode from './nodes/CustomNode'
 import NodePalette from './NodePalette'
 import ShaderPreview from './ShaderPreview'
 import ImportGLSL from './ImportGLSL'
 import ShaderGallery from './ShaderGallery'
+import CodeEditor from './CodeEditor'
 import { NODE_DEFINITIONS } from '../types/nodes'
 import { useShaderStore } from '../stores/shaderStore'
 import '../styles/NodeEditor.css'
@@ -41,7 +42,17 @@ export default function NodeEditor() {
   const [showImportModal, setShowImportModal] = useState(false)
   const [showGallery, setShowGallery] = useState(false)
 
-  const { currentShaderCode, currentShaderName, currentShaderUniforms, isFromSearch, clearShader } = useShaderStore()
+  const {
+    currentShaderCode,
+    currentShaderName,
+    currentShaderUniforms,
+    isFromSearch,
+    clearShader,
+    editorMode,
+    setEditorMode,
+    userGLSLCode,
+    setUserGLSLCode
+  } = useShaderStore()
 
   // Load shader from search into preview
   useEffect(() => {
@@ -161,6 +172,64 @@ export default function NodeEditor() {
     setEdges(importedEdges)
   }, [setNodes, setEdges])
 
+  const handleConvertToNodes = useCallback(async () => {
+    if (!userGLSLCode || userGLSLCode.trim().length === 0) {
+      alert('⚠️ No hay código GLSL para convertir')
+      return
+    }
+
+    try {
+      setIsCompiling(true)
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/nodes/glsl/import`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ glsl_code: userGLSLCode })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+
+        if (data.nodes && data.edges) {
+          // Convert to ReactFlow format
+          const importedNodes = data.nodes
+          const importedEdges = data.edges
+
+          setNodes(importedNodes)
+          setEdges(importedEdges)
+          setEditorMode('nodes')
+
+          alert(`✅ Convertido a ${importedNodes.length} nodos exitosamente`)
+        } else {
+          alert('⚠️ El código es muy complejo para convertir a nodos.\nConsejo: Usa el modo código para shaders avanzados.')
+        }
+      } else {
+        const error = await response.json()
+        alert(`❌ Error al convertir: ${error.detail || 'Error desconocido'}`)
+      }
+    } catch (error) {
+      console.error('Error converting to nodes:', error)
+      alert('❌ Error de conexión al intentar convertir')
+    } finally {
+      setIsCompiling(false)
+    }
+  }, [userGLSLCode, setNodes, setEdges, setEditorMode])
+
+  // Update preview when code mode changes
+  useEffect(() => {
+    if (editorMode === 'code' && userGLSLCode) {
+      setCompiledCode(userGLSLCode)
+      // Extract uniforms from code (simple regex)
+      const uniformMatches = userGLSLCode.matchAll(/uniform\s+(\w+)\s+(\w+)/g)
+      const extractedUniforms = Array.from(uniformMatches).map(match => ({
+        name: match[2],
+        type: match[1],
+        default: match[1] === 'float' ? 0.0 : [0, 0, 0]
+      }))
+      setCompiledUniforms(extractedUniforms)
+    }
+  }, [editorMode, userGLSLCode])
+
   const handleCompile = useCallback(async () => {
     if (isCompilingRef.current || nodes.length === 0) return
 
@@ -218,13 +287,83 @@ export default function NodeEditor() {
         {/* Toolbar */}
         <div className="node-editor-toolbar">
           <div className="toolbar-left">
-            <button
-              onClick={() => setShowPalette(!showPalette)}
-              className="btn btn-primary"
-            >
-              <ChevronDown size={18} />
-              Nodos
-            </button>
+            {/* Mode Toggle */}
+            <div style={{
+              display: 'flex',
+              gap: '4px',
+              backgroundColor: '#1a1a1a',
+              borderRadius: '6px',
+              padding: '4px',
+              border: '1px solid #333'
+            }}>
+              <button
+                onClick={() => setEditorMode('nodes')}
+                className={`btn ${editorMode === 'nodes' ? 'btn-success' : 'btn-primary'}`}
+                style={{
+                  padding: '6px 12px',
+                  fontSize: '12px',
+                  backgroundColor: editorMode === 'nodes' ? '#00ff88' : '#2a2a2a',
+                  color: editorMode === 'nodes' ? '#0a0a0a' : '#a0a0a0'
+                }}
+                title="Modo editor de nodos"
+              >
+                <Network size={16} />
+                Nodos
+              </button>
+              <button
+                onClick={() => setEditorMode('code')}
+                className={`btn ${editorMode === 'code' ? 'btn-success' : 'btn-primary'}`}
+                style={{
+                  padding: '6px 12px',
+                  fontSize: '12px',
+                  backgroundColor: editorMode === 'code' ? '#00ff88' : '#2a2a2a',
+                  color: editorMode === 'code' ? '#0a0a0a' : '#a0a0a0'
+                }}
+                title="Modo editor de código"
+              >
+                <Code2 size={16} />
+                Código
+              </button>
+            </div>
+
+            {/* Node-specific buttons */}
+            {editorMode === 'nodes' && (
+              <>
+                <button
+                  onClick={() => setShowPalette(!showPalette)}
+                  className="btn btn-primary"
+                >
+                  <ChevronDown size={18} />
+                  Paleta
+                </button>
+                <div className="stats-badge">
+                  Nodos: <span>{nodes.length}</span>
+                  {' | '}
+                  Conexiones: <span>{edges.length}</span>
+                </div>
+              </>
+            )}
+
+            {/* Code-specific buttons */}
+            {editorMode === 'code' && (
+              <button
+                onClick={handleConvertToNodes}
+                className="btn btn-primary"
+                title="Convertir código a nodos con IA"
+                disabled={isCompiling}
+                style={{
+                  opacity: isCompiling ? 0.6 : 1,
+                  backgroundColor: '#2a2a2a',
+                  borderColor: '#00ff88',
+                  color: '#00ff88'
+                }}
+              >
+                <ArrowLeftRight size={18} />
+                {isCompiling ? 'Convirtiendo...' : 'Convertir a Nodos'}
+              </button>
+            )}
+
+            {/* Common buttons */}
             <button
               onClick={() => setShowGallery(true)}
               className="btn btn-primary"
@@ -241,11 +380,6 @@ export default function NodeEditor() {
               <FileCode size={18} />
               Importar
             </button>
-            <div className="stats-badge">
-              Nodos: <span>{nodes.length}</span>
-              {' | '}
-              Conexiones: <span>{edges.length}</span>
-            </div>
           </div>
 
           <div className="toolbar-right">
@@ -274,23 +408,27 @@ export default function NodeEditor() {
               {showPreview ? <Eye size={18} /> : <EyeOff size={18} />}
               Preview
             </button>
-            <button
-              onClick={() => setAutoCompile(!autoCompile)}
-              className={`btn ${autoCompile ? 'btn-success' : 'btn-primary'}`}
-              title={autoCompile ? 'Auto-compilación activa' : 'Auto-compilación desactivada'}
-            >
-              {autoCompile ? '⚡' : '⏸️'} Auto
-            </button>
-            <button
-              onClick={handleCompile}
-              className="btn btn-success"
-              title="Compilar a GLSL manualmente"
-              disabled={isCompiling}
-              style={{ opacity: isCompiling ? 0.6 : 1 }}
-            >
-              <Code2 size={18} />
-              {isCompiling ? 'Compilando...' : 'Compilar'}
-            </button>
+            {editorMode === 'nodes' && (
+              <>
+                <button
+                  onClick={() => setAutoCompile(!autoCompile)}
+                  className={`btn ${autoCompile ? 'btn-success' : 'btn-primary'}`}
+                  title={autoCompile ? 'Auto-compilación activa' : 'Auto-compilación desactivada'}
+                >
+                  {autoCompile ? '⚡' : '⏸️'} Auto
+                </button>
+                <button
+                  onClick={handleCompile}
+                  className="btn btn-success"
+                  title="Compilar a GLSL manualmente"
+                  disabled={isCompiling}
+                  style={{ opacity: isCompiling ? 0.6 : 1 }}
+                >
+                  <Code2 size={18} />
+                  {isCompiling ? 'Compilando...' : 'Compilar'}
+                </button>
+              </>
+            )}
             <button
               onClick={handleClearGraph}
               className="btn btn-danger"
@@ -305,30 +443,42 @@ export default function NodeEditor() {
         {/* Main Layout: Top (Canvas + Preview) | Bottom (Code) */}
         <div className="node-editor-main" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)' }}>
 
-          {/* Top Section: Canvas + Preview */}
+          {/* Top Section: Canvas/Code + Preview */}
           <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
 
-            {/* Editor Canvas */}
+            {/* Editor Area - Conditional render based on mode */}
             <div className="canvas-area" style={{ width: showPreview ? '50%' : '100%', position: 'relative' }}>
-              <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                onConnect={onConnect}
-                nodeTypes={nodeTypes}
-                fitView
-              >
-                <Background color="#2a2a2a" gap={16} />
-                <Controls />
+              {editorMode === 'nodes' ? (
+                // Node Editor Mode
+                <ReactFlow
+                  nodes={nodes}
+                  edges={edges}
+                  onNodesChange={onNodesChange}
+                  onEdgesChange={onEdgesChange}
+                  onConnect={onConnect}
+                  nodeTypes={nodeTypes}
+                  fitView
+                >
+                  <Background color="#2a2a2a" gap={16} />
+                  <Controls />
 
-                <Panel position="top-left" className="info-panel">
-                  <div className="info-panel-title">ShaderForge Node Editor</div>
-                  <p className="info-panel-hint">
-                    Arrastra desde el panel izquierdo o haz click en "Nodos"
-                  </p>
-                </Panel>
-              </ReactFlow>
+                  <Panel position="top-left" className="info-panel">
+                    <div className="info-panel-title">ShaderForge Node Editor</div>
+                    <p className="info-panel-hint">
+                      Arrastra desde el panel izquierdo o haz click en "Paleta"
+                    </p>
+                  </Panel>
+                </ReactFlow>
+              ) : (
+                // Code Editor Mode
+                <div style={{ height: '100%', width: '100%', backgroundColor: '#1e1e1e' }}>
+                  <CodeEditor
+                    value={userGLSLCode}
+                    onChange={setUserGLSLCode}
+                    height="100%"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Shader Preview Panel */}
@@ -339,15 +489,16 @@ export default function NodeEditor() {
             )}
           </div>
 
-          {/* Bottom Section: Code Panel (2 columnas: Código + Validación) */}
-          <div style={{
-            height: '250px',
-            borderTop: '2px solid #444',
-            display: 'flex',
-            flexDirection: 'column',
-            backgroundColor: '#1a1a1a',
-            overflow: 'hidden'
-          }}>
+          {/* Bottom Section: Code Panel (2 columnas: Código + Validación) - Only in nodes mode */}
+          {editorMode === 'nodes' && (
+            <div style={{
+              height: '250px',
+              borderTop: '2px solid #444',
+              display: 'flex',
+              flexDirection: 'column',
+              backgroundColor: '#1a1a1a',
+              overflow: 'hidden'
+            }}>
             {/* Header */}
             <div className="code-panel-header" style={{
               padding: '8px 16px',
@@ -487,6 +638,7 @@ export default function NodeEditor() {
 
             </div>
           </div>
+          )}
         </div>
       </div>
 

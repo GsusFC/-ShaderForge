@@ -42,6 +42,12 @@ const DIFFICULTY_CONFIG = {
     color: '#ef4444',
     description: 'Complex shaders with multiple techniques',
   },
+  'code-golf': {
+    label: 'Code Golf',
+    icon: Code2,
+    color: '#a855f7',
+    description: 'Ultra-compact shaders (code mode only)',
+  },
 }
 
 export default function ShaderGallery({ isOpen, onClose, onLoadExample }: ShaderGalleryProps) {
