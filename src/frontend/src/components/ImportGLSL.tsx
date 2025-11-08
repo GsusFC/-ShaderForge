@@ -13,6 +13,7 @@ export default function ImportGLSL({ isOpen, onClose, onImport }: ImportGLSLProp
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [analysis, setAnalysis] = useState<string | null>(null)
+  const [warnings, setWarnings] = useState<string[]>([])
 
   if (!isOpen) return null
 
@@ -25,6 +26,7 @@ export default function ImportGLSL({ isOpen, onClose, onImport }: ImportGLSLProp
     setLoading(true)
     setError(null)
     setAnalysis(null)
+    setWarnings([])
 
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -50,15 +52,21 @@ export default function ImportGLSL({ isOpen, onClose, onImport }: ImportGLSLProp
         setAnalysis(data.analysis)
       }
 
+      if (data.warnings && data.warnings.length > 0) {
+        setWarnings(data.warnings)
+      }
+
       // Import the nodes and edges
       onImport(data.nodes, data.edges)
 
-      // Close modal after successful import
+      // Close modal after successful import (wait longer if there are warnings)
+      const delay = data.warnings && data.warnings.length > 0 ? 3000 : 1500
       setTimeout(() => {
         onClose()
         setGlslCode('')
         setAnalysis(null)
-      }, 1500)
+        setWarnings([])
+      }, delay)
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido')
@@ -73,6 +81,7 @@ export default function ImportGLSL({ isOpen, onClose, onImport }: ImportGLSLProp
       setGlslCode('')
       setError(null)
       setAnalysis(null)
+      setWarnings([])
     }
   }
 
@@ -116,6 +125,17 @@ export default function ImportGLSL({ isOpen, onClose, onImport }: ImportGLSLProp
           {analysis && (
             <div className="import-analysis">
               <strong>Análisis:</strong> {analysis}
+            </div>
+          )}
+
+          {warnings.length > 0 && (
+            <div className="import-warnings">
+              <strong>Advertencias:</strong>
+              <ul>
+                {warnings.map((warning, index) => (
+                  <li key={index}>{warning}</li>
+                ))}
+              </ul>
             </div>
           )}
         </div>
