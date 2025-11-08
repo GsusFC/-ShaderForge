@@ -13,6 +13,101 @@ MAX_GLSL_LENGTH = 50000  # 50KB de código GLSL
 MAX_NODES = 200  # Máximo 200 nodos
 MAX_EDGES = 500  # Máximo 500 conexiones
 
+def detect_code_golf(code: str) -> bool:
+    """
+    Detecta si el código es probablemente code golf (extremadamente minificado).
+
+    Heurísticas:
+    - Muy pocos saltos de línea en relación al tamaño
+    - Variables de una sola letra predominantes
+    - Pocos espacios
+    - Muchas operaciones encadenadas
+    """
+    lines = code.split('\n')
+    non_empty_lines = [l.strip() for l in lines if l.strip()]
+
+    if not non_empty_lines:
+        return False
+
+    total_chars = len(code)
+    avg_line_length = total_chars / max(len(non_empty_lines), 1)
+
+    # Contador de señales de code golf
+    golf_signals = 0
+
+    # Heurística 1: Líneas muy largas (promedio > 100 caracteres)
+    if avg_line_length > 80:
+        golf_signals += 1
+
+    # Heurística 2: Muy pocas líneas para mucho código (densidad alta)
+    if total_chars > 150 and len(non_empty_lines) < 5:
+        golf_signals += 2  # Señal fuerte
+
+    # Heurística 3: Muy pocos espacios en relación al código (ratio < 8%)
+    space_ratio = code.count(' ') / max(total_chars, 1)
+    if space_ratio < 0.08 and total_chars > 100:
+        golf_signals += 1
+
+    # Heurística 4: Muchos operadores sin espacios alrededor
+    # Contar casos como "a=b" o "x*y" sin espacios
+    compact_operators = len(re.findall(r'\w[+\-*/=]\w', code))
+    operator_density = compact_operators / max(total_chars, 1)
+    if operator_density > 0.02:  # Más del 2% son operadores compactos
+        golf_signals += 1
+
+    # Heurística 5: Una sola línea con todo el código
+    if len(non_empty_lines) == 1 and total_chars > 80:
+        golf_signals += 2  # Señal muy fuerte
+
+    # Decidir: necesitamos al menos 2 señales para considerar code golf
+    return golf_signals >= 2
+
+def preprocess_code_golf(code: str) -> tuple[str, bool]:
+    """
+    Pre-procesa código minificado para hacerlo más fácil de analizar.
+
+    Returns:
+        (código procesado, fue modificado)
+    """
+    is_golf = detect_code_golf(code)
+
+    if not is_golf:
+        return code, False
+
+    print(f"[INFO] Code golf detectado, aplicando pre-procesamiento...")
+
+    # No modificamos el código ya que Claude 3.5 Sonnet es capaz de analizarlo,
+    # solo añadimos espacios mínimos para mejorar el parsing
+    processed = code
+
+    # Añadir espacios después de puntos y comas si no los hay
+    processed = re.sub(r';([^\s])', r'; \1', processed)
+
+    # Añadir espacios alrededor de operadores si no los hay
+    processed = re.sub(r'([+\-*/=])([^\s=])', r'\1 \2', processed)
+    processed = re.sub(r'([^\s=])([+\-*/=])', r'\1 \2', processed)
+
+    # Añadir saltos de línea después de punto y coma si la línea es muy larga
+    lines = processed.split('\n')
+    new_lines = []
+    for line in lines:
+        if len(line) > 120 and ';' in line:
+            # Split en múltiples líneas
+            parts = line.split(';')
+            for i, part in enumerate(parts):
+                if i < len(parts) - 1:
+                    new_lines.append(part.strip() + ';')
+                elif part.strip():
+                    new_lines.append(part.strip())
+        else:
+            new_lines.append(line)
+
+    processed = '\n'.join(new_lines)
+
+    print(f"[INFO] Pre-procesamiento completado: {len(code)} -> {len(processed)} chars")
+
+    return processed, True
+
 # Tipos de nodos válidos
 VALID_NODE_TYPES = {
     # Inputs
@@ -176,7 +271,7 @@ def validate_node_graph(nodes: List[Dict], edges: List[Dict]) -> List[str]:
 
     return warnings
 
-async def call_claude_api_async(api_key: str, system_prompt: str, user_prompt: str) -> str:
+async def call_claude_api_async(api_key: str, system_prompt: str, user_prompt: str, max_tokens: int = 8000) -> str:
     """
     Llama a la API de Claude de manera asíncrona.
     """
@@ -187,7 +282,7 @@ async def call_claude_api_async(api_key: str, system_prompt: str, user_prompt: s
     try:
         message = await client.messages.create(
             model="claude-3-5-sonnet-20241022",  # Modelo estable
-            max_tokens=8000,  # Aumentado para grafos más complejos
+            max_tokens=max_tokens,  # Ajustable según complejidad
             temperature=0.3,  # Más determinístico
             system=system_prompt,
             messages=[{"role": "user", "content": user_prompt}]
@@ -280,6 +375,8 @@ async def import_glsl_to_nodes(request: GLSLImportRequest):
     - Límites de complejidad (50KB código, 200 nodos, 500 edges)
     - Mensajes de error detallados
     - Warnings informativos
+    - **SOPORTE PARA CODE GOLF**: Detecta y pre-procesa código extremadamente compactado
+    - Tokens ajustables según complejidad (8K normal, 12K para code golf)
     """
 
     # Verificar que tenemos API key
@@ -302,11 +399,34 @@ async def import_glsl_to_nodes(request: GLSLImportRequest):
 
         print(f"[INFO] Procesando GLSL de {len(request.glsl_code)} caracteres")
 
-        # Prompt mejorado para Claude
+        # Pre-procesar código si es code golf
+        processed_code, was_preprocessed = preprocess_code_golf(request.glsl_code)
+        is_code_golf = was_preprocessed
+
+        if was_preprocessed:
+            print(f"[INFO] Code golf pre-procesado: {len(request.glsl_code)} -> {len(processed_code)} chars")
+
+        # Prompt mejorado para Claude con soporte para code golf
         system_prompt = """Eres un experto en GLSL y node-based shader editors.
 Tu tarea es analizar código GLSL y convertirlo en un GRAFO COMPLETO Y CONECTADO de nodos.
 
 CRÍTICO: Este es un GRAFO DE FLUJO DE DATOS. TODOS los nodos deben estar conectados formando un flujo continuo desde inputs hasta fragment_output.
+
+## SOPORTE PARA CODE GOLF / CÓDIGO MINIFICADO:
+
+Si el código está extremadamente compactado (code golf):
+- **NO TE ASUSTES**: Analiza cuidadosamente cada expresión, incluso si está en una sola línea
+- **DESCOMPÓN PASO A PASO**: Cada operación matemática debe ser un nodo separado
+- **VARIABLES DE 1 LETRA**: Son válidas (p, c, t, u, v, etc.)
+- **EXPRESIONES ENCADENADAS**: Divide "a=b*c+d" en nodos: multiply(b,c) -> add(resultado,d) -> a
+- **SIN ESPACIOS**: Es normal en code golf, analiza operadores y paréntesis
+- **USA custom_code**: Si una expresión es demasiado compleja, agrúpala en custom_code con su lógica completa
+
+Ejemplo: `c=p.x*p.y+sin(t)` se convierte en:
+1. split_vec2(p) -> x, y
+2. multiply(x, y) -> temp1
+3. sin(t) -> temp2
+4. add(temp1, temp2) -> c
 
 ## Nodos disponibles:
 
@@ -351,6 +471,7 @@ CUSTOM:
    - Input de fragment_output: "color"
 7. **POSICIONAMIENTO**: X incrementa de izq. a der. (200px), Y para evitar solapamientos.
 8. **SIMPLIFICACIÓN**: Agrupa operaciones complejas en custom_code si es necesario.
+9. **CODE GOLF**: Si el código es muy compacto, divide cada operación en nodos individuales o usa custom_code para sub-expresiones complejas
 
 ## Formato JSON (EXACTO):
 
@@ -395,20 +516,29 @@ CUSTOM:
 
 IMPORTANTE: Devuelve SOLO el JSON válido. Sin texto adicional, sin markdown externo."""
 
+        # Construir user prompt con información sobre code golf
+        code_golf_hint = ""
+        if is_code_golf:
+            code_golf_hint = "\n\n⚠️ NOTA: Este código es CODE GOLF (extremadamente compactado). Analiza cada operación cuidadosamente y descomponla en nodos individuales o usa custom_code para expresiones complejas."
+
         user_prompt = f"""Analiza y convierte este código GLSL a un grafo de nodos:
 
 ```glsl
-{request.glsl_code}
-```
+{processed_code}
+```{code_golf_hint}
 
 Recuerda: SOLO JSON válido, sin texto adicional."""
 
+        # Ajustar max_tokens según complejidad (más para code golf)
+        max_tokens = 12000 if is_code_golf else 8000
+
         # Llamar a Claude de manera asíncrona
-        print(f"[INFO] Llamando a Claude API (modelo: claude-3-5-sonnet-20241022)")
+        print(f"[INFO] Llamando a Claude API (modelo: claude-3-5-sonnet-20241022, max_tokens: {max_tokens})")
         response_text = await call_claude_api_async(
             api_key=anthropic_api_key,
             system_prompt=system_prompt,
-            user_prompt=user_prompt
+            user_prompt=user_prompt,
+            max_tokens=max_tokens
         )
 
         # Extraer y parsear JSON
@@ -424,6 +554,10 @@ Recuerda: SOLO JSON válido, sin texto adicional."""
 
         # Validar grafo (lanza excepciones si hay errores graves)
         warnings = validate_node_graph(nodes_data, edges_data)
+
+        # Añadir warning si fue code golf
+        if is_code_golf:
+            warnings.insert(0, "Code golf detectado: El código fue pre-procesado para mejorar el análisis. La conversión podría ser más compleja de lo habitual debido a la alta compactación del código original.")
 
         # Validar esquema con Pydantic (esto valida tipos, campos requeridos, etc.)
         try:
