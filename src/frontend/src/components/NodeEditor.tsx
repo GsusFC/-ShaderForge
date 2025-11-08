@@ -11,11 +11,12 @@ import ReactFlow, {
   Panel,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
-import { ChevronDown, Trash2, Code2, Eye, EyeOff, Lightbulb, FileCode } from 'lucide-react'
+import { ChevronDown, Trash2, Code2, Eye, EyeOff, Layers, FileCode } from 'lucide-react'
 import CustomNode from './nodes/CustomNode'
 import NodePalette from './NodePalette'
 import ShaderPreview from './ShaderPreview'
 import ImportGLSL from './ImportGLSL'
+import ShaderGallery from './ShaderGallery'
 import { NODE_DEFINITIONS } from '../types/nodes'
 import { useShaderStore } from '../stores/shaderStore'
 import '../styles/NodeEditor.css'
@@ -38,6 +39,7 @@ export default function NodeEditor() {
   const [validationWarnings, setValidationWarnings] = useState<string[]>([])
   const [showValidation, setShowValidation] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
+  const [showGallery, setShowGallery] = useState(false)
 
   const { currentShaderCode, currentShaderName, currentShaderUniforms, isFromSearch, clearShader } = useShaderStore()
 
@@ -153,73 +155,6 @@ export default function NodeEditor() {
     }
   }, [setNodes, setEdges])
 
-  const handleLoadExample = useCallback(() => {
-    // Create example shader: UV → Perlin Noise → Fragment Output
-    const exampleNodes: Node[] = [
-      {
-        id: 'example-uv',
-        type: 'shaderNode',
-        position: { x: 100, y: 200 },
-        data: {
-          label: 'UV',
-          description: 'Coordenadas UV normalizadas de pantalla',
-          category: 'input',
-          type: 'uv_input',
-          color: '#3b82f6',
-          parameters: {},
-        },
-      },
-      {
-        id: 'example-noise',
-        type: 'shaderNode',
-        position: { x: 350, y: 200 },
-        data: {
-          label: 'Perlin Noise',
-          description: 'Ruido de Perlin 2D',
-          category: 'utility',
-          type: 'perlin_noise',
-          color: '#ec4899',
-          parameters: {
-            scale: 5.0,
-          },
-        },
-      },
-      {
-        id: 'example-output',
-        type: 'shaderNode',
-        position: { x: 600, y: 200 },
-        data: {
-          label: 'Fragment Output',
-          description: 'Color final del shader',
-          category: 'output',
-          type: 'fragment_output',
-          color: '#00ff88',
-          parameters: {},
-        },
-      },
-    ]
-
-    const exampleEdges: Edge[] = [
-      {
-        id: 'e-uv-noise',
-        source: 'example-uv',
-        target: 'example-noise',
-        sourceHandle: 'output',
-        targetHandle: 'input',
-      },
-      {
-        id: 'e-noise-output',
-        source: 'example-noise',
-        target: 'example-output',
-        sourceHandle: 'output',
-        targetHandle: 'input',
-      },
-    ]
-
-    setNodes(exampleNodes)
-    setEdges(exampleEdges)
-  }, [setNodes, setEdges])
-
   const handleImportGLSL = useCallback((importedNodes: any[], importedEdges: any[]) => {
     // Replace current graph with imported nodes
     setNodes(importedNodes)
@@ -291,12 +226,12 @@ export default function NodeEditor() {
               Nodos
             </button>
             <button
-              onClick={handleLoadExample}
+              onClick={() => setShowGallery(true)}
               className="btn btn-primary"
-              title="Cargar shader de ejemplo"
+              title="Abrir galería de shaders"
             >
-              <Lightbulb size={18} />
-              Ejemplo
+              <Layers size={18} />
+              Galería
             </button>
             <button
               onClick={() => setShowImportModal(true)}
@@ -560,6 +495,16 @@ export default function NodeEditor() {
         isOpen={showImportModal}
         onClose={() => setShowImportModal(false)}
         onImport={handleImportGLSL}
+      />
+
+      {/* Shader Gallery Modal */}
+      <ShaderGallery
+        isOpen={showGallery}
+        onClose={() => setShowGallery(false)}
+        onLoadExample={(nodes, edges) => {
+          setNodes(nodes)
+          setEdges(edges)
+        }}
       />
     </div>
   )
